@@ -9,6 +9,7 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "eslint-config-prettier": "^10.1.1",
     "prettier": "^3.7.4",
     "turbo": "^2.9.18",
     "typescript": "5.9.2"
