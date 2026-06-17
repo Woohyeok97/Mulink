@@ -30,7 +30,7 @@ enum VocalTier {
 
 // 유저 테이블
 model User {
-  id             String         @id @default(cuid()) // PK (Primary Key)
+  id             String         @id @db.Uuid // PK. Supabase Auth의 auth.users.id(UUID)와 동일하게 채운다 (자동생성 X)
   kakaoId        String         @unique // 카카오 아이디
   nickname       String                 
   role           Role           @default(STUDENT) // 권한
@@ -41,7 +41,7 @@ model User {
 // 레슨 신청 테이블
 model LessonRequest {
   id           String     @id @default(cuid()) // PK (Primary Key)
-  studentId       String // FK (Foreign Key)
+  studentId       String     @db.Uuid // FK (Foreign Key) — User.id(UUID)와 타입 일치
   student         User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   region       String // 희망 레슨 지역
   goal         String // 레슨 목표
