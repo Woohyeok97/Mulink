@@ -3,6 +3,7 @@ import { HomeAuth } from '@/shared/ui/home-auth';
 
 async function getNickname(): Promise<string | null> {
   const supabase = await createClient();
+  // getSession은 쿠키의 access_token을 NestJS로 전달하는 용도만. 신원은 NestJS가 getUser로 재검증한다.
   const {
     data: { session },
   } = await supabase.auth.getSession();
