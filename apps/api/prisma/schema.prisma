@@ -11,3 +11,46 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// 유저 종류
+enum Role {
+  STUDENT
+  COACH
+  ADMIN
+}
+
+// 보컬 티어 종류
+enum VocalTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+}
+
+// 유저 테이블
+model User {
+  id             String         @id @default(cuid()) // PK (Primary Key)
+  kakaoId        String         @unique // 카카오 아이디
+  nickname       String                 
+  role           Role           @default(STUDENT) // 권한
+  createdAt      DateTime       @default(now()) // 계정 생성 일자
+  lessonRequests LessonRequest[] // 1:N 관계 필드 (가상 — DB에 컬럼 안 생김)
+}
+
+// 레슨 신청 테이블
+model LessonRequest {
+  id           String     @id @default(cuid()) // PK (Primary Key)
+  studentId       String // FK (Foreign Key)
+  student         User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  region       String // 희망 레슨 지역
+  goal         String // 레슨 목표
+  genre        String // 선호 장르
+  voiceAudioUrl     String // 녹음 파일 url
+  studentName  String // 레슨생 이름
+  studentPhone String // 레슨생 전화번호
+  tier         VocalTier? // 보컬 평가 (평가 이전에는 null)
+  createdAt    DateTime   @default(now()) // 레슨 신청일자 (업로드 횟수 제한/복구 정렬에 사용)
+
+  @@index([studentId])
+}
