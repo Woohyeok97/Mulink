@@ -10,7 +10,10 @@ export function extractKakaoProfile(user: User): KakaoProfile {
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
   const identity = user.identities?.find((i) => i.provider === 'kakao');
   const kakaoId =
-    identity?.id ?? (meta.provider_id as string) ?? (meta.sub as string) ?? user.id;
+    identity?.id ??
+    (meta.provider_id as string) ??
+    (meta.sub as string) ??
+    user.id;
   const nickname =
     (meta.name as string) ??
     (meta.full_name as string) ??

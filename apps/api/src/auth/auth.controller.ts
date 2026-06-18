@@ -32,7 +32,9 @@ export class AuthController {
   // 보호 엔드포인트: JWT 검증 후 내 User 반환.
   @Get('me')
   async me(@Req() req: AuthedRequest) {
-    const user = await this.prisma.user.findUnique({ where: { id: req.user.id } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
     if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
     return user;
   }

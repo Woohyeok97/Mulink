@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { PrismaPg } from '@prisma/adapter-pg';
 // Prisma 7은 클라이언트를 node_modules가 아니라 prisma/schema.prisma의
 // generator output 경로(apps/api/generated/prisma)에 생성한다.
 import { PrismaClient } from '../../generated/prisma/client';
@@ -15,6 +16,12 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  constructor() {
+    // Prisma 7은 Driver Adapter로 연결한다(schema의 datasource url을 런타임에 읽지 않음).
+    // pg 어댑터에 연결 문자열을 넘긴다. 앱은 풀러(DATABASE_URL)를 쓰고, 마이그레이션은 DIRECT_URL을 쓴다.
+    super({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+  }
+
   // 모듈이 초기화될 때(앱 시작 시) DB에 연결한다.
   async onModuleInit() {
     await this.$connect();

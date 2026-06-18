@@ -6,13 +6,17 @@ import {
 } from '@nestjs/common';
 import { SupabaseService } from './supabase.service';
 
+// Bearer JWT 검증 Guard
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
   constructor(private readonly supabase: SupabaseService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const authHeader: string | undefined = request.headers['authorization'];
+    const request = context.switchToHttp().getRequest<{
+      headers: { authorization?: string };
+      user: unknown;
+    }>();
+    const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException('인증 토큰이 없습니다.');
     }
