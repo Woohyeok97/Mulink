@@ -1,9 +1,12 @@
-import { NotFoundException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
 
 describe('AuthController', () => {
-  const prisma = { user: { upsert: jest.fn(), findUnique: jest.fn() } };
-  const controller = new AuthController(prisma as any);
+  const authService = {
+    sync: jest.fn(),
+    me: jest.fn(),
+  } as unknown as AuthService;
+  const controller = new AuthController(authService);
   const reqUser: any = {
     id: 'uuid-1',
     user_metadata: { name: '홍길동' },
@@ -12,28 +15,23 @@ describe('AuthController', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('sync: 토큰 유저로 User를 upsert 한다', async () => {
-    prisma.user.upsert.mockResolvedValue({ id: 'uuid-1', nickname: '홍길동' });
-    const result = await controller.sync({ user: reqUser } as any);
-    expect(prisma.user.upsert).toHaveBeenCalledWith({
-      where: { id: 'uuid-1' },
-      create: { id: 'uuid-1', kakaoId: '12345', nickname: '홍길동' },
-      update: {},
-    });
-    expect(result).toEqual({ id: 'uuid-1', nickname: '홍길동' });
-  });
-
-  it('me: DB의 User를 반환한다', async () => {
-    prisma.user.findUnique.mockResolvedValue({ id: 'uuid-1', nickname: '홍길동' });
-    await expect(controller.me({ user: reqUser } as any)).resolves.toEqual({
+  it('sync: authService.sync에 유저를 넘긴다', async () => {
+    (authService.sync as jest.Mock).mockResolvedValue({
       id: 'uuid-1',
       nickname: '홍길동',
     });
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'uuid-1' } });
+    const result = await controller.sync({ user: reqUser } as any);
+    expect(authService.sync).toHaveBeenCalledWith(reqUser);
+    expect(result).toEqual({ id: 'uuid-1', nickname: '홍길동' });
   });
 
-  it('me: User가 없으면 404', async () => {
-    prisma.user.findUnique.mockResolvedValue(null);
-    await expect(controller.me({ user: reqUser } as any)).rejects.toThrow(NotFoundException);
+  it('me: authService.me에 userId를 넘긴다', async () => {
+    (authService.me as jest.Mock).mockResolvedValue({
+      id: 'uuid-1',
+      nickname: '홍길동',
+    });
+    const result = await controller.me({ user: reqUser } as any);
+    expect(authService.me).toHaveBeenCalledWith('uuid-1');
+    expect(result).toEqual({ id: 'uuid-1', nickname: '홍길동' });
   });
 });
