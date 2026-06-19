@@ -15,6 +15,7 @@ export class SessionTicketService {
 
   // 토큰을 저장하고 ticket을 돌려준다. 기본 30초 후 만료.
   issue(tokens: SessionTokens, ttlSeconds = 30): string {
+    this.purgeExpired(); // 소비되지 않고 만료된 ticket이 쌓이지 않도록 발급 때마다 청소
     const ticket = randomUUID();
     this.store.set(ticket, { tokens, expiresAt: Date.now() + ttlSeconds * 1000 });
     return ticket;
@@ -27,5 +28,13 @@ export class SessionTicketService {
     this.store.delete(ticket);
     if (Date.now() >= entry.expiresAt) return null;
     return entry.tokens;
+  }
+
+  // 만료된 ticket을 맵에서 제거한다. (소비되지 않은 ticket의 메모리 누수 방지)
+  private purgeExpired(): void {
+    const now = Date.now();
+    for (const [ticket, entry] of this.store) {
+      if (now >= entry.expiresAt) this.store.delete(ticket);
+    }
   }
 }
