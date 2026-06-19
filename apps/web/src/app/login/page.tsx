@@ -1,15 +1,12 @@
 'use client';
 
-import { createClient } from '@/shared/lib/supabase/client';
 import { Button } from '@/shared/ui/button';
 
 export default function LoginPage() {
-  const handleLogin = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'kakao',
-      options: { redirectTo: `${window.location.origin}/auth/callback`, scopes: 'profile_nickname profile_image' }
-    });
+  // 카카오 인증은 NestJS가 직접 처리한다. 버튼을 누르면 NestJS의 로그인 진입점으로
+  // 이동하고, 거기서 카카오 동의 화면으로 redirect 된다.
+  const handleLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/kakao/login`;
   };
 
   return (
