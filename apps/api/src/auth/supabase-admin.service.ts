@@ -12,8 +12,8 @@ export class SupabaseAdminService {
 
   constructor() {
     this.client = createClient(
-      process.env.SUPABASE_URL ?? 'http://localhost',
-      process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'placeholder',
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {
         auth: { persistSession: false, autoRefreshToken: false },
         // Node 20은 네이티브 WebSocket이 없어 ws를 transport로 주입한다.

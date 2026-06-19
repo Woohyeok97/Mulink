@@ -1,6 +1,20 @@
 import { SupabaseAdminService } from './supabase-admin.service';
 
 describe('SupabaseAdminService', () => {
+  const ORIGINAL_ENV = process.env;
+  beforeEach(() => {
+    // createClient가 URL/키 없이 생성 시 throw하므로 더미 env를 채운다.
+    // (실제 Supabase 호출은 fakeClient로 대체되므로 값은 무의미)
+    process.env = {
+      ...ORIGINAL_ENV,
+      SUPABASE_URL: 'http://localhost',
+      SUPABASE_SERVICE_ROLE_KEY: 'test-key',
+    };
+  });
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
   it('generateLink의 hashed_token을 verifyOtp의 token_hash로 넘겨 세션을 발급한다', async () => {
     const generateLink = jest.fn().mockResolvedValue({
       data: { properties: { hashed_token: 'hash-xyz' } },
