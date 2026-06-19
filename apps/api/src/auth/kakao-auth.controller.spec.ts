@@ -58,6 +58,16 @@ describe('KakaoAuthController', () => {
     expect(admin.issueSession).not.toHaveBeenCalled();
   });
 
+  it('callback: query state가 없으면(누락) /login?error=state로 거른다', async () => {
+    const req = makeReq({ kakao_oauth_state: 'cookie-state' });
+    const res = makeRes();
+
+    await controller.callback('code-1', undefined, req, res);
+
+    expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/login?error=state'));
+    expect(admin.issueSession).not.toHaveBeenCalled();
+  });
+
   it('callback: state 일치면 세션 발급 후 /auth/callback?ticket=...로 redirect한다', async () => {
     (kakao.exchangeCodeForToken as jest.Mock).mockResolvedValue('kakao-token');
     (kakao.fetchUserInfo as jest.Mock).mockResolvedValue({ kakaoId: '1', nickname: '홍길동' });
@@ -72,7 +82,10 @@ describe('KakaoAuthController', () => {
     await controller.callback('code-1', 'same-state', req, res);
 
     expect(admin.issueSession).toHaveBeenCalledWith({ kakaoId: '1', nickname: '홍길동' });
-    expect(res.clearCookie).toHaveBeenCalledWith('kakao_oauth_state');
+    expect(res.clearCookie).toHaveBeenCalledWith(
+      'kakao_oauth_state',
+      expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
+    );
     expect(res.redirect).toHaveBeenCalledWith(
       expect.stringContaining('/auth/callback?ticket=ticket-1'),
     );

@@ -35,8 +35,8 @@ export class KakaoAuthController {
   // 쿠키 state와 query state를 대조해 CSRF를 막고, 통과하면 세션을 발급한다.
   @Get('callback')
   async callback(
-    @Query('code') code: string,
-    @Query('state') state: string,
+    @Query('code') code: string | undefined,
+    @Query('state') state: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -46,8 +46,14 @@ export class KakaoAuthController {
       res.redirect(`${WEB_ORIGIN}/login?error=state`);
       return;
     }
-    // 검증을 통과했으니 1회용 state 쿠키는 즉시 폐기.
-    res.clearCookie(STATE_COOKIE);
+    // 검증을 통과했으니 1회용 state 쿠키는 즉시 폐기. (set과 동일 옵션으로 확실히 삭제)
+    res.clearCookie(STATE_COOKIE, { httpOnly: true, sameSite: 'lax' });
+
+    // state는 맞지만 code가 빠진 비정상 콜백 방어.
+    if (!code) {
+      res.redirect(`${WEB_ORIGIN}/login?error=session`);
+      return;
+    }
 
     try {
       const kakaoToken = await this.kakao.exchangeCodeForToken(code);
