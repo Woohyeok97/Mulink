@@ -37,7 +37,7 @@ export class SupabaseAdminService {
         data: { provider: 'kakao', provider_id: profile.kakaoId, name: profile.nickname },
       },
     });
-    if (linkError || !linkData) {
+    if (linkError || !linkData?.properties?.hashed_token) {
       throw new InternalServerErrorException('Supabase 매직링크 생성 실패');
     }
 

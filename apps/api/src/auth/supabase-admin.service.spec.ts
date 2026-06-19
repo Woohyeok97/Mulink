@@ -60,4 +60,25 @@ describe('SupabaseAdminService', () => {
       service.issueSession({ kakaoId: '1', nickname: 'n' }),
     ).rejects.toThrow();
   });
+
+  it('verifyOtp 실패(세션 없음) 시 에러를 던진다', async () => {
+    const fakeClient: any = {
+      auth: {
+        admin: {
+          generateLink: jest.fn().mockResolvedValue({
+            data: { properties: { hashed_token: 'hash-xyz' } },
+            error: null,
+          }),
+        },
+        verifyOtp: jest
+          .fn()
+          .mockResolvedValue({ data: { session: null }, error: { message: 'bad otp' } }),
+      },
+    };
+    const service = new SupabaseAdminService();
+    (service as any).client = fakeClient;
+    await expect(
+      service.issueSession({ kakaoId: '1', nickname: 'n' }),
+    ).rejects.toThrow();
+  });
 });
