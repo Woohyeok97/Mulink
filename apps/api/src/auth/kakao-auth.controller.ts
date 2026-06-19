@@ -55,9 +55,17 @@ export class KakaoAuthController {
       return;
     }
 
+    // 카카오 통신 실패와 Supabase 세션발급 실패를 구분해 에러 코드를 다르게 준다.
+    let profile;
     try {
       const kakaoToken = await this.kakao.exchangeCodeForToken(code);
-      const profile = await this.kakao.fetchUserInfo(kakaoToken);
+      profile = await this.kakao.fetchUserInfo(kakaoToken);
+    } catch {
+      res.redirect(`${WEB_ORIGIN}/login?error=kakao`);
+      return;
+    }
+
+    try {
       const tokens = await this.admin.issueSession(profile);
       const ticket = this.tickets.issue(tokens);
       res.redirect(`${WEB_ORIGIN}/auth/callback?ticket=${ticket}`);
