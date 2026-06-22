@@ -5,8 +5,9 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // 카카오 OAuth state 쿠키를 req.cookies로 읽기 위해 쿠키 파서를 켠다.
-  app.use(cookieParser());
+
+  app.use(cookieParser()); // 카카오 OAuth state 쿠키를 req.cookies로 읽기 위해 쿠키 파서를 켬
+
   app.enableCors({
     origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
     credentials: true,

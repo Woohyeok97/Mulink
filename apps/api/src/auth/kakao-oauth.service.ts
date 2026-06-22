@@ -14,7 +14,7 @@ export class KakaoOauthService {
   private readonly clientSecret = process.env.KAKAO_CLIENT_SECRET!;
   private readonly redirectUri = process.env.KAKAO_REDIRECT_URI!;
 
-  // 1단계: 사용자를 보낼 카카오 동의 화면 URL. state로 CSRF 방어.
+  // 1단계: 사용자를 보낼 카카오 동의 화면 URL. state로 CSRF 방어
   buildAuthorizeUrl(state: string): string {
     const params = new URLSearchParams({
       client_id: this.restApiKey,
@@ -26,7 +26,7 @@ export class KakaoOauthService {
     return `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
   }
 
-  // 2단계: 카카오가 준 code를 카카오 access_token으로 교환.
+  // 2단계: 카카오가 준 code -> 카카오 access_token으로 교환
   async exchangeCodeForToken(code: string): Promise<string> {
     const res = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
@@ -39,17 +39,25 @@ export class KakaoOauthService {
         code,
       }),
     });
-    if (!res.ok) throw new InternalServerErrorException('카카오 토큰 교환 실패');
+
+    if (!res.ok) {
+      throw new InternalServerErrorException('카카오 토큰 교환 실패');
+    }
+
     const data = (await res.json()) as { access_token: string };
     return data.access_token;
   }
 
-  // 3단계: access_token으로 카카오 유저 정보 조회 → kakaoId/nickname.
+  // 3단계: access_token -> 카카오 유저 정보 조회 → kakaoId/nickname.
   async fetchUserInfo(kakaoAccessToken: string): Promise<KakaoProfile> {
     const res = await fetch('https://kapi.kakao.com/v2/user/me', {
       headers: { Authorization: `Bearer ${kakaoAccessToken}` },
     });
-    if (!res.ok) throw new InternalServerErrorException('카카오 유저 정보 조회 실패');
+
+    if (!res.ok) {
+      throw new InternalServerErrorException('카카오 유저 정보 조회 실패');
+    }
+
     const data = (await res.json()) as {
       id: number;
       kakao_account?: { profile?: { nickname?: string } };

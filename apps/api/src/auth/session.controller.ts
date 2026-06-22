@@ -1,5 +1,8 @@
 import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
-import { SessionTicketService, type SessionTokens } from './session-ticket.service';
+import {
+  SessionTicketService,
+  type SessionTokens,
+} from './session-ticket.service';
 
 // web이 ticket을 진짜 세션 토큰으로 교환하는 입구. (로그인 직후 1회 호출, 가드 미적용)
 @Controller('auth/session')
