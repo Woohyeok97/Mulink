@@ -29,7 +29,9 @@
 ## SDK 사실 검증 (설치된 `@supabase/auth-js@2.108.2` 타입 직접 확인)
 
 - `generateLink({ type: 'magiclink', email })` 응답: `data.properties.hashed_token` (← `token_hash` 아님)
-- `verifyOtp({ token_hash, type: 'magiclink' })` — 파라미터명은 `token_hash` (응답 필드명과 다름. 혼동 주의)
+- `verifyOtp({ token_hash, type: 'email' })` — 파라미터명은 `token_hash` (응답 필드명과 다름. 혼동 주의).
+  ⚠️ `generateLink`가 `magiclink`여도, `token_hash`로 검증할 때 `type`은 **`'email'`**이다.
+  타입 정의상 `'magiclink'`도 허용되지만 런타임에서는 매칭되는 토큰을 못 찾아 `otp_expired`로 거부된다.
 - `verifyOtp` 성공 시 `data.session`에 `access_token` / `refresh_token` 반환
 - magiclink generateLink는 유저가 없으면 자동 생성 (타입 주석: "handles the creation of the user for signup, invite and magiclink")
 - `@supabase/ssr@0.12.0` `createBrowserClient`는 쿠키 저장소(`cookieEncoding: base64url`) 사용 → setSession이 쿠키에 씀
@@ -49,7 +51,7 @@
                               7. generateLink(magiclink, {kakaoId}@kakao.local,
                                    user_metadata:{provider:'kakao', provider_id, name})  → auth.users 자동생성
                                                                               → hashed_token
-                              8. verifyOtp(token_hash=hashed_token, type:magiclink)
+                              8. verifyOtp(token_hash=hashed_token, type:email)
                                                                               → access/refresh 토큰
                               9. 교환권(ticket) 발급, 토큰을 메모리에 30초 보관
  ← redirect /auth/callback?ticket=xxx
