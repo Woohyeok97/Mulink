@@ -12,9 +12,9 @@ describe('AuthService', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('sync: 토큰 유저로 User를 upsert 한다', async () => {
+  it('upsertUser: 토큰 유저로 User를 upsert 한다', async () => {
     prisma.user.upsert.mockResolvedValue({ id: 'uuid-1', nickname: '홍길동' });
-    const result = await service.sync(supabaseUser);
+    const result = await service.upsertUser(supabaseUser);
     expect(prisma.user.upsert).toHaveBeenCalledWith({
       where: { id: 'uuid-1' },
       create: { id: 'uuid-1', kakaoId: '12345', nickname: '홍길동' },
@@ -23,20 +23,20 @@ describe('AuthService', () => {
     expect(result).toEqual({ id: 'uuid-1', nickname: '홍길동' });
   });
 
-  it('me: DB의 User를 반환한다', async () => {
+  it('getMe: DB의 User를 반환한다', async () => {
     prisma.user.findUnique.mockResolvedValue({
       id: 'uuid-1',
       nickname: '홍길동',
     });
-    const result = await service.me('uuid-1');
+    const result = await service.getMe('uuid-1');
     expect(prisma.user.findUnique).toHaveBeenCalledWith({
       where: { id: 'uuid-1' },
     });
     expect(result).toEqual({ id: 'uuid-1', nickname: '홍길동' });
   });
 
-  it('me: User가 없으면 404', async () => {
+  it('getMe: User가 없으면 404', async () => {
     prisma.user.findUnique.mockResolvedValue(null);
-    await expect(service.me('uuid-1')).rejects.toThrow(NotFoundException);
+    await expect(service.getMe('uuid-1')).rejects.toThrow(NotFoundException);
   });
 });

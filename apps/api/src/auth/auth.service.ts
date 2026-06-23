@@ -7,7 +7,7 @@ import { extractKakaoProfile } from './kakao-profile';
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async sync(user: SupabaseUser) {
+  async upsertUser(user: SupabaseUser) {
     const { kakaoId, nickname } = extractKakaoProfile(user);
 
     return this.prisma.user.upsert({
@@ -17,7 +17,7 @@ export class AuthService {
     });
   }
 
-  async me(userId: string) {
+  async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });

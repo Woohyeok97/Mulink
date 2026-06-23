@@ -35,7 +35,7 @@ describe('KakaoOauthService', () => {
     expect(token).toBe('kakao-access');
   });
 
-  it('fetchUserInfo: kakaoId와 nickname을 추출한다', async () => {
+  it('getKakaoProfile: kakaoId와 nickname을 추출한다', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -44,17 +44,17 @@ describe('KakaoOauthService', () => {
       }),
     } as Response);
     const service = new KakaoOauthService();
-    const profile = await service.fetchUserInfo('kakao-access');
+    const profile = await service.getKakaoProfile('kakao-access');
     expect(profile).toEqual({ kakaoId: '4821', nickname: '홍길동' });
   });
 
-  it('fetchUserInfo: nickname 없으면 카카오사용자 폴백', async () => {
+  it('getKakaoProfile: nickname 없으면 카카오사용자 폴백', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ id: 4821, kakao_account: {} }),
     } as Response);
     const service = new KakaoOauthService();
-    const profile = await service.fetchUserInfo('kakao-access');
+    const profile = await service.getKakaoProfile('kakao-access');
     expect(profile).toEqual({ kakaoId: '4821', nickname: '카카오사용자' });
   });
 });

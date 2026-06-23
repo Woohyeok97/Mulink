@@ -30,7 +30,7 @@ describe('SupabaseAdminService', () => {
     // 내부 client를 테스트용으로 주입
     (service as any).client = fakeClient;
 
-    const tokens = await service.issueSession({ kakaoId: '4821', nickname: '홍길동' });
+    const tokens = await service.createSessionTokens({ kakaoId: '4821', nickname: '홍길동' });
 
     // 합성 이메일로 magiclink 생성
     expect(generateLink).toHaveBeenCalledWith(
@@ -43,7 +43,7 @@ describe('SupabaseAdminService', () => {
       }),
     );
     // 응답 hashed_token → 파라미터 token_hash 매핑 검증 (오타 회귀 방지)
-    expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'hash-xyz', type: 'magiclink' });
+    expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'hash-xyz', type: 'email' });
     expect(tokens).toEqual({ accessToken: 'AT', refreshToken: 'RT' });
   });
 
@@ -57,7 +57,7 @@ describe('SupabaseAdminService', () => {
     const service = new SupabaseAdminService();
     (service as any).client = fakeClient;
     await expect(
-      service.issueSession({ kakaoId: '1', nickname: 'n' }),
+      service.createSessionTokens({ kakaoId: '1', nickname: 'n' }),
     ).rejects.toThrow();
   });
 
@@ -78,7 +78,7 @@ describe('SupabaseAdminService', () => {
     const service = new SupabaseAdminService();
     (service as any).client = fakeClient;
     await expect(
-      service.issueSession({ kakaoId: '1', nickname: 'n' }),
+      service.createSessionTokens({ kakaoId: '1', nickname: 'n' }),
     ).rejects.toThrow();
   });
 });

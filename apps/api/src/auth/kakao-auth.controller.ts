@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { KakaoOauthService } from './kakao-oauth.service';
 import { SupabaseAdminService } from './supabase-admin.service';
-import { SessionTicketService } from './session-ticket.service';
+import { SessionCodeService } from './session-code.service';
+import type { KakaoProfile } from './kakao-profile';
 
 // 로그인 성공/실패 후 사용자를 돌려보낼 web 주소
 const WEB_ORIGIN = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
@@ -17,12 +18,12 @@ export class KakaoAuthController {
   constructor(
     private readonly kakao: KakaoOauthService,
     private readonly admin: SupabaseAdminService,
-    private readonly tickets: SessionTicketService,
+    private readonly sessionCode: SessionCodeService,
   ) {}
 
-  // 동의 화면으로 보내기 전, state를 쿠키에 심고 카카오 authorize URL로 redirect.
-  @Get('login')
-  login(@Res() res: Response) {
+  // 1단계: 동의 화면으로 보내기 전, state를 쿠키에 심고 카카오 authorize URL로 redirect.
+  @Get('authorize')
+  authorize(@Res() res: Response) {
     const state = randomUUID();
     res.cookie(STATE_COOKIE, state, {
       httpOnly: true,
@@ -32,8 +33,7 @@ export class KakaoAuthController {
     res.redirect(this.kakao.buildAuthorizeUrl(state));
   }
 
-  // 카카오가 code/state를 들고 돌아오는 지점.
-  // 쿠키 state와 query state를 대조해 CSRF를 막고, 통과하면 세션을 발급한다.
+  // 2단계: 카카오가 code/state를 들고 돌아오는 지점 -> 쿠키 state와 쿼리 파라미터 state를 대조해 CSRF를 막고, 통과하면 토큰을 발급
   @Get('callback')
   async callback(
     @Query('code') code: string | undefined, // URL의 쿼리 파라미터에서 code를 추출 (카카오가 보낸 인가코드를 의미)
@@ -41,14 +41,16 @@ export class KakaoAuthController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const cookieState = req.cookies?.[STATE_COOKIE]; // nest.js가 쿠키에 저장해놓은 state
+    const cookieState = (req.cookies as Record<string, string | undefined>)[
+      STATE_COOKIE
+    ];
 
     // state가 없거나 어긋나면 위조 요청으로 판단
     if (!cookieState || cookieState !== state) {
       res.redirect(`${WEB_ORIGIN}/login?error=state`);
       return;
     }
-    // 검증을 통과하면 1회용 state 쿠키는 폐기 (set과 동일 옵션으로 확실히 삭제)
+    // 쿠키 state === 쿼리 파라미터 state 검증을 통과하면 1회용 state 쿠키는 폐기 (set과 동일 옵션으로 확실히 삭제)
     res.clearCookie(STATE_COOKIE, { httpOnly: true, sameSite: 'lax' });
 
     // state는 맞지만 code가 빠진 비정상 콜백 차단
@@ -58,19 +60,20 @@ export class KakaoAuthController {
     }
 
     // 카카오 통신 실패와 Supabase 세션발급 실패를 구분해 에러 코드를 다르게 준다.
-    let profile;
+    let profile: KakaoProfile;
+
     try {
-      const kakaoToken = await this.kakao.exchangeCodeForToken(code);
-      profile = await this.kakao.fetchUserInfo(kakaoToken);
+      const kakaoToken = await this.kakao.exchangeCodeForToken(code); // code -> 카카오 Access Token 발급
+      profile = await this.kakao.getKakaoProfile(kakaoToken); // 카카오 Access Token -> 카카오 프로필 교환
     } catch {
       res.redirect(`${WEB_ORIGIN}/login?error=kakao`);
       return;
     }
 
     try {
-      const tokens = await this.admin.issueSession(profile);
-      const ticket = this.tickets.issue(tokens);
-      res.redirect(`${WEB_ORIGIN}/auth/callback?ticket=${ticket}`);
+      const sessionTokens = await this.admin.createSessionTokens(profile);
+      const sessionCode = this.sessionCode.createSessionCode(sessionTokens);
+      res.redirect(`${WEB_ORIGIN}/auth/callback?code=${sessionCode}`);
     } catch {
       res.redirect(`${WEB_ORIGIN}/login?error=session`);
     }

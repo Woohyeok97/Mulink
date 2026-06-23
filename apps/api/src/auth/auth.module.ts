@@ -7,7 +7,7 @@ import { KakaoAuthController } from './kakao-auth.controller';
 import { SessionController } from './session.controller';
 import { KakaoOauthService } from './kakao-oauth.service';
 import { SupabaseAdminService } from './supabase-admin.service';
-import { SessionTicketService } from './session-ticket.service';
+import { SessionCodeService } from './session-code.service';
 
 // auth 관련된 모든 것을 하나로 묶는 Module
 @Module({
@@ -18,7 +18,7 @@ import { SessionTicketService } from './session-ticket.service';
     SupabaseAuthGuard,
     KakaoOauthService,
     SupabaseAdminService,
-    SessionTicketService,
+    SessionCodeService,
   ],
 })
 export class AuthModule {}

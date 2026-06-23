@@ -1,10 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-
-// 카카오에서 받은 유저 식별 정보. (auth.users 메타에 실어 기존 추출 로직과 연결)
-export interface KakaoProfile {
-  kakaoId: string;
-  nickname: string;
-}
+import type { KakaoProfile } from './kakao-profile';
 
 // 카카오 OAuth 서버와의 통신만 담당한다.
 // scope를 직접 지정해 account_email을 빼는 것이 이 전환의 핵심.
@@ -14,7 +9,7 @@ export class KakaoOauthService {
   private readonly clientSecret = process.env.KAKAO_CLIENT_SECRET!;
   private readonly redirectUri = process.env.KAKAO_REDIRECT_URI!;
 
-  // 1단계: 사용자를 보낼 카카오 동의 화면 URL. state로 CSRF 방어
+  // 1단계: 사용자를 보낼 카카오 동의 화면 URL -> state로 CSRF 방어
   buildAuthorizeUrl(state: string): string {
     const params = new URLSearchParams({
       client_id: this.restApiKey,
@@ -49,7 +44,7 @@ export class KakaoOauthService {
   }
 
   // 3단계: access_token -> 카카오 유저 정보 조회 → kakaoId/nickname.
-  async fetchUserInfo(kakaoAccessToken: string): Promise<KakaoProfile> {
+  async getKakaoProfile(kakaoAccessToken: string): Promise<KakaoProfile> {
     const res = await fetch('https://kapi.kakao.com/v2/user/me', {
       headers: { Authorization: `Bearer ${kakaoAccessToken}` },
     });

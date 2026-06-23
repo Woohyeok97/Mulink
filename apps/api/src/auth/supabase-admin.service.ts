@@ -1,11 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
-import type { SessionTokens } from './session-ticket.service';
-import type { KakaoProfile } from './kakao-oauth.service';
+import type { SessionTokens } from './session-code.service';
+import type { KakaoProfile } from './kakao-profile';
 
-// service_role 키로 동작하는 관리자 클라이언트.
-// ⚠️ 이 키는 DB 전체 권한이라 서버에서만 쓴다. (검증용 SupabaseService와 분리)
+// supabase auth로 세션을 발급 -> generateLink → verifyOtp 조합이라 service_role key 사용(admin API)
+// ⚠️ 이 키는 DB 전체 권한이라 서버에서만 쓴다 (검증용 SupabaseService와 분리)
+
+// 세션: 사용자가 로그인할 때 생성되는 인증 상태 자체 auth.sessions 테이블에 저장되는 레코드
+// 토큰: 그 세션을 표현하는 수단 (access + refresh)
 @Injectable()
 export class SupabaseAdminService {
   private client: ReturnType<typeof createClient>;
@@ -25,7 +28,7 @@ export class SupabaseAdminService {
   // 카카오 프로필 -> Supabase 세션(access/refresh)을 발급
   // 1) 합성 이메일로 magiclink 생성 (유저 없으면 자동 생성·있으면 재사용 = 멱등)
   // 2) 거기서 나온 hashed_token을 verifyOtp(token_hash)로 검증해 세션 획득
-  async issueSession(profile: KakaoProfile): Promise<SessionTokens> {
+  async createSessionTokens(profile: KakaoProfile): Promise<SessionTokens> {
     const email = `${profile.kakaoId}@kakao.local`; // 임시로 사용할 이메일 주소
 
     const { data: linkData, error: linkError } =
@@ -33,8 +36,7 @@ export class SupabaseAdminService {
         type: 'magiclink',
         email,
         options: {
-          // user_metadata에 실어두면 verifyOtp가 만든 User에 반영되어
-          // 기존 extractKakaoProfile(provider_id/name)이 그대로 읽는다.
+          // user_metadata에 실어두면 verifyOtp가 만든 User에 반영되어 기존 extractKakaoProfile(provider_id/name)이 그대로 읽는다.
           data: {
             provider: 'kakao',
             provider_id: profile.kakaoId,
@@ -51,7 +53,7 @@ export class SupabaseAdminService {
     const { data: otpData, error: otpError } = await this.client.auth.verifyOtp(
       {
         token_hash: linkData.properties.hashed_token,
-        type: 'magiclink',
+        type: 'email', // token_hash로 검증할 때 type은 'email' (generateLink가 magiclink여도 동일)
       },
     );
 
