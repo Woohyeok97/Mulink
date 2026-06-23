@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/button/button';
 import { signOut } from '@/app/actions/auth';
+import { Input } from './input/input';
 
 export function HomeAuth({ nickname }: { nickname: string | null }) {
   return nickname ? (
@@ -10,6 +11,7 @@ export function HomeAuth({ nickname }: { nickname: string | null }) {
         <Button type="submit" variant="outline">
           로그아웃
         </Button>
+        <Input placeholder="입력해" />
       </form>
     </div>
   ) : (

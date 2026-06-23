@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/button/button';
 
 export default function LoginPage() {
   // 카카오 인증은 NestJS가 직접 처리한다. 버튼을 누르면 NestJS의 로그인 진입점으로 이동하고, 거기서 카카오 동의 화면으로 redirect 된다.
