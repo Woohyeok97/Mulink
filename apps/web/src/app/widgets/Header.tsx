@@ -8,9 +8,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from '@/shared/ui/dropdown/dropdown';
+import { getCurrentUser } from '@/entities/user/user.api';
+import { logout } from '@/features/auth/auth.action';
 
-export function Header() {
-  const user = true;
+export async function Header() {
+  const user = await getCurrentUser();
+  console.log(user);
 
   return (
     <header
@@ -45,12 +48,18 @@ export function Header() {
                   className="flex items-center rounded-full p-1 transition-colors hover:bg-(--green-50) outline-none focus-visible:ring-2 focus-visible:ring-(--green-400)"
                   aria-label="내 계정 메뉴 열기">
                   <Avatar size="sm">
-                    <AvatarFallback>사용자</AvatarFallback>
+                    <AvatarFallback>{user.nickname.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={8}>
-                <DropdownMenuItem variant="destructive">로그아웃</DropdownMenuItem>
+                <form action={logout}>
+                  <DropdownMenuItem variant="destructive" asChild>
+                    <button type="submit" className="w-full">
+                      로그아웃
+                    </button>
+                  </DropdownMenuItem>
+                </form>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
