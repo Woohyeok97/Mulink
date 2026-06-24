@@ -40,7 +40,7 @@ export default function LoginPage() {
             {'숨겨진 내 목소리의\n가치를 찾다'}
           </h1>
           <p className="break-keep whitespace-pre-line text-(length:--text-base) leading-normal text-(--neutral-500)">
-            {'목소리를 녹음하면 AI가 5가지 지표로 분석해\n나에게 맞는 보컬 코치를 매칭해 드려요.'}
+            {'목소리를 녹음하면 전문가가 직접 분석해\n나에게 맞는 보컬 코치를 매칭해 드려요.'}
           </p>
         </div>
 
