@@ -20,5 +20,6 @@ import { SessionCodeService } from './session-code.service';
     SupabaseAdminService,
     SessionCodeService,
   ],
+  exports: [SupabaseAuthGuard, SupabaseService],
 })
 export class AuthModule {}
