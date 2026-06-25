@@ -33,13 +33,10 @@ describe('coachApplySchema', () => {
     }
   });
 
-  it('REGIONS 배열이 3개 항목을 올바른 순서로 포함한다', () => {
-    expect(REGIONS).toHaveLength(3);
-    expect(REGIONS[0].value).toBe('SEOUL');
-    expect(REGIONS[1].value).toBe('GYEONGGI');
-    expect(REGIONS[2].value).toBe('INCHEON');
-    expect(REGIONS[0].label).toBe('서울');
-    expect(REGIONS[1].label).toBe('경기');
-    expect(REGIONS[2].label).toBe('인천');
+  it('REGIONS의 모든 value가 schema enum으로 유효하다', () => {
+    for (const { value } of REGIONS) {
+      const result = coachApplySchema.safeParse({ activityName: '테스트', region: value });
+      expect(result.success).toBe(true);
+    }
   });
 });

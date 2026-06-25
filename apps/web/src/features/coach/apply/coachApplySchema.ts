@@ -8,9 +8,11 @@ export const REGIONS = [
 
 export type RegionValue = (typeof REGIONS)[number]['value'];
 
+const regionValues = REGIONS.map((r) => r.value) as [RegionValue, ...RegionValue[]];
+
 export const coachApplySchema = z.object({
   activityName: z.string().min(1, '활동명을 입력해 주세요.'),
-  region: z.enum(['SEOUL', 'GYEONGGI', 'INCHEON'], {
+  region: z.enum(regionValues, {
     error: '지역을 선택해 주세요.',
   }),
 });
