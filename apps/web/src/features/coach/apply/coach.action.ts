@@ -4,10 +4,10 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/shared/lib/supabase/server';
 import type { CoachApplyFormValues } from './coachApplySchema';
 
-type ActionResult = { error: string } | never;
-
-export async function registerCoachAction(data: CoachApplyFormValues): Promise<ActionResult> {
+export async function registerCoachAction(data: CoachApplyFormValues): Promise<{ error: string } | void> {
   const supabase = await createClient();
+  // getSession은 쿠키 기반 세션을 그대로 읽으며 서버 재검증 없음.
+  // Bearer 토큰을 백엔드에 전달해야 하는 구조상 getUser() 대신 사용.
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
 
