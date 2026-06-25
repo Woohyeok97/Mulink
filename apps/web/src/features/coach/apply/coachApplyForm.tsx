@@ -31,6 +31,10 @@ export function CoachApplyForm() {
     formState: { errors, isSubmitting },
   } = useForm<CoachApplyFormValues>({
     resolver: zodResolver(coachApplySchema),
+    defaultValues: {
+      activityName: '',
+      region: undefined,
+    },
   });
 
   async function onSubmit(values: CoachApplyFormValues) {
@@ -46,7 +50,7 @@ export function CoachApplyForm() {
       {serverError && (
         <div
           role="alert"
-          className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-(--danger-700)"
+          className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive"
         >
           {serverError}
         </div>
@@ -54,22 +58,23 @@ export function CoachApplyForm() {
 
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1 text-sm font-semibold text-(--neutral-700)">
+          <label htmlFor="activityName" className="flex items-center gap-1 text-sm font-semibold text-(--neutral-700)">
             <Mic2 className="size-3.5 text-(--green-600)" />
             활동명
           </label>
           <Input
+            id="activityName"
             placeholder="활동명을 입력해 주세요"
             aria-invalid={errors.activityName ? 'true' : undefined}
             {...register('activityName')}
           />
           {errors.activityName && (
-            <p className="text-xs text-destructive">{errors.activityName.message}</p>
+            <p role="alert" className="text-xs text-destructive">{errors.activityName.message}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1 text-sm font-semibold text-(--neutral-700)">
+          <label htmlFor="region" className="flex items-center gap-1 text-sm font-semibold text-(--neutral-700)">
             <MapPin className="size-3.5 text-(--green-600)" />
             활동 지역
           </label>
@@ -77,8 +82,9 @@ export function CoachApplyForm() {
             name="region"
             control={control}
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <Select value={field.value ?? undefined} onValueChange={field.onChange}>
                 <SelectTrigger
+                  id="region"
                   className="w-full"
                   aria-invalid={errors.region ? 'true' : undefined}
                 >
@@ -95,7 +101,7 @@ export function CoachApplyForm() {
             )}
           />
           {errors.region && (
-            <p className="text-xs text-destructive">{errors.region.message}</p>
+            <p role="alert" className="text-xs text-destructive">{errors.region.message}</p>
           )}
         </div>
       </div>

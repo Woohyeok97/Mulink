@@ -12,10 +12,16 @@ vi.mock('./coach.action', () => ({
 // native <select>로 렌더링하는 단순 mock으로 대체.
 import React from 'react';
 
-type SelectContextValue = { onValueChange: (v: string) => void; value: string };
-const SelectMockContext = React.createContext<SelectContextValue>({
-  onValueChange: () => {},
-  value: '',
+// vi.mock은 파일 상단으로 호이스팅되므로 factory 밖 변수를 참조할 수 없음.
+// vi.hoisted()로 context를 먼저 생성해 factory 안에서 참조 가능하게 함.
+const { SelectMockContext } = vi.hoisted(() => {
+  const React = require('react') as typeof import('react');
+  type SelectContextValue = { onValueChange: (v: string) => void; value: string };
+  const SelectMockContext = React.createContext<SelectContextValue>({
+    onValueChange: () => {},
+    value: '',
+  });
+  return { SelectMockContext };
 });
 
 vi.mock('@/shared/ui/select/select', () => {
@@ -91,6 +97,7 @@ describe('CoachApplyForm', () => {
     await user.click(screen.getByRole('button', { name: /코치 가입하기/ }));
 
     expect(await screen.findByText('활동명을 입력해 주세요.')).toBeInTheDocument();
+    expect(await screen.findByText('지역을 선택해 주세요.')).toBeInTheDocument();
   });
 
   it('registerCoachAction이 에러를 반환하면 role="alert" 영역에 에러 표시', async () => {
