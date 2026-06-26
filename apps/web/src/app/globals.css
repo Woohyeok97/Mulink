@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -49,82 +49,257 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  /* ---- Brand green --------------------------------------------------- */
+  --green-50:  #F1FAF3;
+  --green-100: #E1F4E6;
+  --green-200: #CFEDD5;
+  --green-300: #B2DCBF;
+  --green-400: #8FC4A0;
+  --green-500: #6BA882;
+  --green-600: #4E8A66;
+  --green-700: #3B6B4F;
+  --green-800: #2C4F3B;
+  --green-900: #1F3729;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* ---- Sand / cream -------------------------------------------------- */
+  --sand-50:  #FBF8F0;
+  --sand-100: #F4EEDD;
+  --sand-200: #E9DFC6;
+  --sand-300: #D9CBA8;
+  --sand-400: #C5B392;
+  --sand-500: #A8966F;
+
+  /* ---- Sage ---------------------------------------------------------- */
+  --sage-100: #EAEFE8;
+  --sage-300: #C3D1BF;
+  --sage-500: #94AA8B;
+  --sage-700: #6B7E63;
+
+  /* ---- Neutrals ------------------------------------------------------ */
+  --neutral-0:   #FFFFFF;
+  --neutral-50:  #FAFAF7;
+  --neutral-100: #F4F4EF;
+  --neutral-200: #E8E7DF;
+  --neutral-300: #D6D5CA;
+  --neutral-400: #A8A79B;
+  --neutral-500: #7C7B6F;
+  --neutral-600: #5C5B51;
+  --neutral-700: #44443C;
+  --neutral-800: #2E2E28;
+  --neutral-900: #000000;
+
+  /* ---- Status -------------------------------------------------------- */
+  --success-100: #E1F4E6;
+  --success-500: #4E8A66;
+  --success-700: #3B6B4F;
+
+  --warning-100: #FBEFD6;
+  --warning-500: #E0A43B;
+  --warning-700: #B47C1E;
+
+  --danger-100:  #FBE3E3;
+  --danger-500:  #DC5B5B;
+  --danger-700:  #B23E3E;
+
+  --info-100:    #E2EBFB;
+  --info-500:    #5B7FDC;
+  --info-700:    #3E5CB2;
+
+  /* ---- Tier accents -------------------------------------------------- */
+  --tier-bronze:   #C08A57;
+  --tier-silver:   #9AA6AE;
+  --tier-gold:     #D8B24A;
+  --tier-platinum: #6BA882;
+  --tier-diamond:  #5B9FB5;
+
+  /* ---- shadcn 시맨틱 별칭 --------------------------------------------- */
+  --background:               #FFFFFF;
+  --foreground:               #111111;
+
+  --card:                     #FFFFFF;
+  --card-foreground:          #000000;
+
+  --popover:                  #FFFFFF;
+  --popover-foreground:       #000000;
+
+  --primary:                  var(--green-600);
+  --primary-foreground:       #FFFFFF;
+
+  --brand-surface:            var(--green-200);
+  --brand-surface-foreground: var(--green-900);
+
+  --emphasis:                 var(--green-800);
+  --emphasis-foreground:      #FFFFFF;
+
+  --secondary:                var(--sand-100);
+  --secondary-foreground:     var(--green-800);
+
+  --muted:                    var(--neutral-100);
+  --muted-foreground:         var(--neutral-500);
+
+  --accent:                   var(--green-100);
+  --accent-foreground:        var(--green-800);
+
+  --destructive:              var(--danger-500);
+  --destructive-foreground:   #FFFFFF;
+
+  --border:                   var(--neutral-200);
+  --input:                    var(--neutral-200);
+  --ring:                     var(--green-500);
+
+  --surface-page:             #FFFFFF;
+  --surface-subtle:           var(--neutral-50);
+  --surface-cream:            var(--sand-100);
+  --surface-mint:             var(--green-100);
+
+  /* ---- Chart --------------------------------------------------------- */
+  --chart-1: var(--green-500);
+  --chart-2: var(--green-600);
+  --chart-3: var(--green-700);
+  --chart-4: var(--sand-500);
+  --chart-5: var(--sand-400);
+
+  /* ---- Sidebar ------------------------------------------------------- */
+  --sidebar:                    var(--neutral-50);
+  --sidebar-foreground:         var(--neutral-900);
+  --sidebar-primary:            var(--green-600);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:             var(--green-100);
+  --sidebar-accent-foreground:  var(--green-800);
+  --sidebar-border:             var(--neutral-200);
+  --sidebar-ring:               var(--green-500);
+
+  /* ---- Typography ---------------------------------------------------- */
+  --font-sans: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+               "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-2xs:  0.6875rem;
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.375rem;
+  --text-2xl:  1.75rem;
+  --text-3xl:  2.25rem;
+  --text-4xl:  3rem;
+  --text-5xl:  4rem;
+
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+
+  --leading-tight:   1.2;
+  --leading-snug:    1.35;
+  --leading-normal:  1.55;
+  --leading-relaxed: 1.75;
+
+  --tracking-tighter: -0.03em;
+  --tracking-tight:   -0.015em;
+  --tracking-normal:  0;
+  --tracking-wide:    0.02em;
+
+  --text-display: var(--text-5xl);
+  --text-h1:      var(--text-4xl);
+  --text-h2:      var(--text-3xl);
+  --text-h3:      var(--text-2xl);
+  --text-title:   var(--text-xl);
+  --text-body:    var(--text-base);
+  --text-body-sm: var(--text-sm);
+  --text-caption: var(--text-xs);
+
+  /* ---- Spacing ------------------------------------------------------- */
+  --space-0:  0;
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* ---- Radius -------------------------------------------------------- */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-2xl:  32px;
+  --radius-full: 999px;
+
+  --radius: var(--radius-md);
+
+  /* ---- Shadows ------------------------------------------------------- */
+  --shadow-xs:    0 1px 2px rgba(32, 39, 31, 0.04);
+  --shadow-sm:    0 1px 3px rgba(32, 39, 31, 0.06), 0 1px 2px rgba(32, 39, 31, 0.04);
+  --shadow-md:    0 4px 12px rgba(32, 39, 31, 0.07), 0 2px 4px rgba(32, 39, 31, 0.04);
+  --shadow-lg:    0 10px 28px rgba(32, 39, 31, 0.09), 0 4px 10px rgba(32, 39, 31, 0.05);
+  --shadow-xl:    0 20px 48px rgba(32, 39, 31, 0.12);
+  --shadow-brand: 0 8px 24px rgba(78, 138, 102, 0.20);
+
+  /* ---- Motion -------------------------------------------------------- */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-soft:   cubic-bezier(0.34, 1.2, 0.64, 1);
+  --dur-fast:   120ms;
+  --dur-base:   200ms;
+  --dur-slow:   320ms;
+
+  /* ---- Layout -------------------------------------------------------- */
+  --container-sm:  640px;
+  --container-md:  768px;
+  --container-lg:  1024px;
+  --container-xl:  1200px;
+  --border-width:  1px;
 }
 
 @layer base {
-  * {
+  *, *::before, *::after {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    font-size: var(--text-body);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: var(--tracking-normal);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--foreground);
+  }
+
+  p { margin: 0; }
+
+  a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+  a:hover { color: var(--green-700); }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }
