@@ -4,32 +4,16 @@ import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mic2, MapPin, UserPlus } from 'lucide-react';
-
 import { Input } from '@/shared/ui/input/input';
 import { Button } from '@/shared/ui/button/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select/select';
-import {
-  coachApplySchema,
-  REGIONS,
-  type CoachApplyFormValues,
-} from './coachApplySchema';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select/select';
+import { coachApplySchema, REGIONS, type CoachApplyFormValues } from './coachApplySchema';
 import { registerCoachAction } from './coach.action';
 
 export function CoachApplyForm() {
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<CoachApplyFormValues>({
+  const { register, control, handleSubmit, formState: { errors, isSubmitting } } = useForm<CoachApplyFormValues>({
     resolver: zodResolver(coachApplySchema),
     defaultValues: {
       activityName: '',
@@ -37,21 +21,18 @@ export function CoachApplyForm() {
     },
   });
 
-  async function onSubmit(values: CoachApplyFormValues) {
+  const onSubmit = handleSubmit(async (data) => {
     setServerError(null);
-    const result = await registerCoachAction(values);
+    const result = await registerCoachAction(data);
     if (result?.error) {
       setServerError(result.error);
     }
-  }
+  });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="w-full">
+    <form onSubmit={onSubmit} noValidate className="w-full">
       {serverError && (
-        <div
-          role="alert"
-          className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive"
-        >
+        <div role="alert" className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive">
           {serverError}
         </div>
       )}
@@ -69,7 +50,9 @@ export function CoachApplyForm() {
             {...register('activityName')}
           />
           {errors.activityName && (
-            <p role="alert" className="text-xs text-destructive">{errors.activityName.message}</p>
+            <p role="alert" className="text-xs text-destructive">
+              {errors.activityName.message}
+            </p>
           )}
         </div>
 
@@ -83,11 +66,7 @@ export function CoachApplyForm() {
             control={control}
             render={({ field }) => (
               <Select value={field.value ?? undefined} onValueChange={field.onChange}>
-                <SelectTrigger
-                  id="region"
-                  className="w-full"
-                  aria-invalid={errors.region ? 'true' : undefined}
-                >
+                <SelectTrigger id="region" className="w-full" aria-invalid={errors.region ? 'true' : undefined}>
                   <SelectValue placeholder="지역을 선택해 주세요" />
                 </SelectTrigger>
                 <SelectContent>
@@ -101,7 +80,9 @@ export function CoachApplyForm() {
             )}
           />
           {errors.region && (
-            <p role="alert" className="text-xs text-destructive">{errors.region.message}</p>
+            <p role="alert" className="text-xs text-destructive">
+              {errors.region.message}
+            </p>
           )}
         </div>
       </div>
@@ -112,9 +93,8 @@ export function CoachApplyForm() {
           variant="emphasis"
           size="lg"
           loading={isSubmitting}
-          leftIcon={<UserPlus className="size-[18px]" />}
-          className="w-full"
-        >
+          leftIcon={<UserPlus className="size-4.5" />}
+          className="w-full">
           코치 가입하기
         </Button>
       </div>

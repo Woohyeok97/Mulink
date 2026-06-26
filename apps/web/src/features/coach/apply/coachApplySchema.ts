@@ -8,7 +8,7 @@ export const REGIONS = [
 
 export type RegionValue = (typeof REGIONS)[number]['value'];
 
-const regionValues = REGIONS.map((r) => r.value) as [RegionValue, ...RegionValue[]];
+const regionValues = REGIONS.map((region) => region.value) as [RegionValue, ...RegionValue[]];
 
 export const coachApplySchema = z.object({
   activityName: z.string().min(1, '활동명을 입력해 주세요.'),
