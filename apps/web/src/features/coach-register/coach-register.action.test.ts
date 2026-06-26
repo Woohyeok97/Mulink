@@ -10,13 +10,13 @@ vi.mock('next/navigation', () => ({
 
 global.fetch = vi.fn();
 
-import { registerCoachAction } from './coach.action';
+import { coachRegisterAction } from './coach-register.action';
 import { createClient } from '@/shared/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 const mockFormData = { activityName: '테스트코치', region: 'SEOUL' as const };
 
-describe('registerCoachAction', () => {
+describe('coachRegisterAction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -28,7 +28,7 @@ describe('registerCoachAction', () => {
       },
     } as never);
 
-    const result = await registerCoachAction(mockFormData);
+    const result = await coachRegisterAction(mockFormData);
 
     expect(result).toEqual({ error: '로그인이 필요합니다.' });
     expect(fetch).not.toHaveBeenCalled();
@@ -47,7 +47,7 @@ describe('registerCoachAction', () => {
       json: vi.fn().mockResolvedValue({ message: '이미 코치로 등록되어 있습니다.' }),
     } as never);
 
-    const result = await registerCoachAction(mockFormData);
+    const result = await coachRegisterAction(mockFormData);
 
     expect(result).toEqual({ error: '이미 코치로 등록되어 있습니다.' });
   });
@@ -65,7 +65,7 @@ describe('registerCoachAction', () => {
       json: vi.fn().mockResolvedValue({}),
     } as never);
 
-    const result = await registerCoachAction(mockFormData);
+    const result = await coachRegisterAction(mockFormData);
 
     expect(result).toEqual({ error: '코치 가입에 실패했습니다.' });
   });
@@ -82,7 +82,7 @@ describe('registerCoachAction', () => {
       ok: true,
     } as never);
 
-    await registerCoachAction(mockFormData);
+    await coachRegisterAction(mockFormData);
 
     expect(redirect).toHaveBeenCalledWith('/');
   });

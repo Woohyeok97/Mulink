@@ -10,9 +10,7 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
   const supabase = await createClient();
 
   // 쿠키에서 세션의 access_token을 꺼낸다. 토큰 검증은 백엔드 Guard가 수행한다.
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
   const accessToken = session?.access_token;
   if (!accessToken) return null; // 세션 없음 = 비로그인
 

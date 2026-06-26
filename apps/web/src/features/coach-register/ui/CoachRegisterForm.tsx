@@ -1,29 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useController } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+// components
 import { Mic2, MapPin, UserPlus } from 'lucide-react';
 import { Input } from '@/shared/ui/input/input';
 import { Button } from '@/shared/ui/button/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select/select';
-import { coachApplySchema, REGIONS, type CoachApplyFormValues } from './coachApplySchema';
-import { registerCoachAction } from './coach.action';
+// schemas
+import { CoachRegisterSchema, REGIONS, type CoachRegisterFormType } from '../coach-register.schema';
+// actions
+import { coachRegisterAction } from '../coach-register.action';
 
-export function CoachApplyForm() {
+export function CoachRegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const { register, control, handleSubmit, formState: { errors, isSubmitting } } = useForm<CoachApplyFormValues>({
-    resolver: zodResolver(coachApplySchema),
+  const { register, control, handleSubmit, formState } = useForm<CoachRegisterFormType>({
+    resolver: zodResolver(CoachRegisterSchema),
     defaultValues: {
       activityName: '',
-      region: undefined,
-    },
+      region: undefined
+    }
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  // 폼 상태
+  const { errors, isSubmitting } = formState;
+
+  // 지역 선택 controller
+  const { field: regionField } = useController({ name: 'region', control });
+
+  // 코치 신청 핸들러
+  const onSubmit = handleSubmit(async data => {
     setServerError(null);
-    const result = await registerCoachAction(data);
+    const result = await coachRegisterAction(data);
     if (result?.error) {
       setServerError(result.error);
     }
@@ -61,24 +71,18 @@ export function CoachApplyForm() {
             <MapPin className="size-3.5 text-(--green-600)" />
             활동 지역
           </label>
-          <Controller
-            name="region"
-            control={control}
-            render={({ field }) => (
-              <Select value={field.value ?? undefined} onValueChange={field.onChange}>
-                <SelectTrigger id="region" className="w-full" aria-invalid={errors.region ? 'true' : undefined}>
-                  <SelectValue placeholder="지역을 선택해 주세요" />
-                </SelectTrigger>
-                <SelectContent>
-                  {REGIONS.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
+          <Select value={regionField.value ?? undefined} onValueChange={regionField.onChange}>
+            <SelectTrigger id="region" className="w-full" aria-invalid={errors.region ? 'true' : undefined}>
+              <SelectValue placeholder="지역을 선택해 주세요" />
+            </SelectTrigger>
+            <SelectContent>
+              {REGIONS.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {errors.region && (
             <p role="alert" className="text-xs text-destructive">
               {errors.region.message}

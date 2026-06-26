@@ -12,9 +12,8 @@ import type { RegisterCoachDto } from './dto/register-coach.dto';
 export class CoachService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // 로그인된 STUDENT를 COACH로 승격하고 CoachProfile을 생성한다.
   async registerCoach(userId: string, dto: RegisterCoachDto) {
-    // 1. 입력 검증 (수동) — 트랜잭션 전에 빠르게 거른다.
+    // 1단계: 트랜잭션 전에 dto 검증 (수동)
     if (!dto.activityName?.trim()) {
       throw new BadRequestException('활동명을 입력해주세요.');
     }
@@ -22,17 +21,19 @@ export class CoachService {
       throw new BadRequestException('지역은 서울/경기/인천 중 선택해주세요.');
     }
 
-    // 2. 자격 확인 — 트랜잭션 밖에서 조회·거부.
+    // 2단계: 트랜잭션 전에 유저 자격 확인 —> 트랜잭션 밖에서 조회, 거부
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
+    if (!user) {
+      throw new NotFoundException('유저를 찾을 수 없습니다.');
+    }
     if (user.role === 'COACH') {
       throw new ConflictException('이미 코치로 등록된 계정입니다.');
     }
     if (user.role === 'ADMIN') {
-      throw new ConflictException('코치로 등록할 수 없는 계정입니다.');
+      throw new ConflictException('관리자 계정은 코치로 등록할 수 없습니다.');
     }
 
-    // 3. 쓰기 — role 승격 + 프로필 생성을 한 트랜잭션으로 묶는다.
+    // 3단계: 유저의 role을 STUDENT-> COACH로 승격하고 CoachProfile 생성을 트랜잭션으로 묶음
     return this.prisma.$transaction(async (prismaTransaction) => {
       await prismaTransaction.user.update({
         where: { id: userId },

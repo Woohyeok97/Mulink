@@ -1,14 +1,19 @@
 import { redirect } from 'next/navigation';
 import { Mic } from 'lucide-react';
-import { createClient } from '@/shared/lib/supabase/server';
-import { CoachApplyForm } from '@/features/coach/apply/coachApplyForm';
+import { CoachRegisterForm } from '@/features/coach-register/ui/CoachRegisterForm';
+import { getCurrentUser } from '@/entities/user/user.api';
 
-export default async function CoachApplyPage() {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+export default async function CoachRegisterPage() {
+  const user = await getCurrentUser();
 
-  if (!session) {
-    redirect('/');
+  // 비로그인 상태인 경우
+  if (!user) {
+    return redirect('/');
+  }
+
+  // 코치 or 관리자 인경우
+  if (user.role !== 'STUDENT') {
+    return redirect('/');
   }
 
   return (
@@ -25,21 +30,23 @@ export default async function CoachApplyPage() {
       <div className="relative z-10 flex w-full max-w-100 flex-col items-center sm:rounded-2xl sm:border sm:border-white/60 sm:bg-white/[0.82] sm:px-12 sm:py-14 sm:shadow-(--shadow-xl) sm:backdrop-blur-[16px]">
         <div className="mb-12 flex items-center gap-2">
           <Mic className="size-7 stroke-2 text-(--green-700)" />
-          <span className="text-xl font-extrabold leading-none tracking-tight text-(--green-800)">
-            MU:LINK
-          </span>
+          <span className="text-xl font-extrabold leading-none tracking-tight text-(--green-800)">MU:LINK</span>
         </div>
 
         <div className="mb-10 text-center">
           <h1 className="mb-3 break-keep text-2xl font-extrabold leading-tight tracking-tighter text-(--green-800)">
-            당신의 목소리로<br />코치가 되다
+            당신의 목소리로
+            <br />
+            코치가 되다
           </h1>
           <p className="break-keep text-base leading-normal text-(--neutral-500)">
-            MU:LINK 코치로 등록하고<br />나에게 맞는 수강생을 만나 보세요.
+            MU:LINK 코치로 등록하고
+            <br />
+            나에게 맞는 수강생을 만나 보세요.
           </p>
         </div>
 
-        <CoachApplyForm />
+        <CoachRegisterForm />
       </div>
     </div>
   );

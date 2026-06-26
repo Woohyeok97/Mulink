@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Mic } from 'lucide-react';
-import { Button } from '@/shared/ui/button/button';
+import { buttonVariants } from '@/shared/ui/button/button';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
 import {
   DropdownMenu,
@@ -42,30 +42,37 @@ export async function Header() {
         {/* 우측 영역 */}
         <div className="flex items-center gap-2.5">
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="flex items-center rounded-full p-1 transition-colors hover:bg-(--green-50) outline-none focus-visible:ring-2 focus-visible:ring-(--green-400)"
-                  aria-label="내 계정 메뉴 열기">
-                  <Avatar size="sm">
-                    <AvatarFallback>{user.nickname.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={8}>
-                <form action={logout}>
-                  <DropdownMenuItem variant="destructive" asChild>
-                    <button type="submit" className="w-full">
-                      로그아웃
-                    </button>
-                  </DropdownMenuItem>
-                </form>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex items-center rounded-full p-1 transition-colors hover:bg-(--green-50) outline-none focus-visible:ring-2 focus-visible:ring-(--green-400)"
+                    aria-label="내 계정 메뉴 열기">
+                    <Avatar size="sm">
+                      <AvatarFallback>{user.nickname.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={8}>
+                  <form action={logout}>
+                    <DropdownMenuItem variant="destructive" asChild>
+                      <button type="submit" className="w-full">
+                        로그아웃
+                      </button>
+                    </DropdownMenuItem>
+                  </form>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {user.role === 'STUDENT' && (
+                <Link href="/coach/register" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                  코치 신청
+                </Link>
+              )}
+            </>
           ) : (
-            <Button variant="outline" size="sm">
-              <Link href="/login">로그인 / 회원가입</Link>
-            </Button>
+            <Link href="/login" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+              로그인 / 회원가입
+            </Link>
           )}
         </div>
       </div>

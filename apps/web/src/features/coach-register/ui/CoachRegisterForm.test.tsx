@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { CoachApplyForm } from './coachApplyForm';
-import * as coachAction from './coach.action';
+import { CoachRegisterForm } from './CoachRegisterForm';
+import * as coachAction from '../coach-register.action';
 
-vi.mock('./coach.action', () => ({
-  registerCoachAction: vi.fn(),
+vi.mock('../coach-register.action', () => ({
+  coachRegisterAction: vi.fn()
 }));
 
 // Radix Select는 jsdom에서 pointer/scroll API가 없어 직접 상호작용이 안 됨.
@@ -19,13 +19,17 @@ const { SelectMockContext } = vi.hoisted(() => {
   type SelectContextValue = { onValueChange: (v: string) => void; value: string };
   const SelectMockContext = React.createContext<SelectContextValue>({
     onValueChange: () => {},
-    value: '',
+    value: ''
   });
   return { SelectMockContext };
 });
 
 vi.mock('@/shared/ui/select/select', () => {
-  function Select({ children, onValueChange, value }: {
+  function Select({
+    children,
+    onValueChange,
+    value
+  }: {
     children: React.ReactNode;
     onValueChange: (v: string) => void;
     value: string;
@@ -48,21 +52,19 @@ vi.mock('@/shared/ui/select/select', () => {
   function SelectContent({ children }: { children: React.ReactNode }) {
     const { onValueChange, value } = React.useContext(SelectMockContext);
     const options: Array<{ value: string; label: React.ReactNode }> = [];
-    React.Children.forEach(children, (child) => {
+    React.Children.forEach(children, child => {
       const c = child as React.ReactElement<{ value: string; children: React.ReactNode }>;
       if (c?.props?.value) {
         options.push({ value: c.props.value, label: c.props.children });
       }
     });
     return (
-      <select
-        aria-label="지역을 선택해 주세요"
-        value={value}
-        onChange={(e) => onValueChange(e.target.value)}
-      >
+      <select aria-label="지역을 선택해 주세요" value={value} onChange={e => onValueChange(e.target.value)}>
         <option value="">지역을 선택해 주세요</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
         ))}
       </select>
     );
@@ -75,15 +77,15 @@ vi.mock('@/shared/ui/select/select', () => {
   return { Select, SelectTrigger, SelectValue, SelectContent, SelectItem };
 });
 
-const mockRegisterCoachAction = vi.mocked(coachAction.registerCoachAction);
+const mockCoachRegisterAction = vi.mocked(coachAction.coachRegisterAction);
 
-describe('CoachApplyForm', () => {
+describe('CoachRegisterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('폼이 렌더링되면 활동명 input, 지역 select, 제출 버튼이 보임', () => {
-    render(<CoachApplyForm />);
+    render(<CoachRegisterForm />);
 
     expect(screen.getByPlaceholderText('활동명을 입력해 주세요')).toBeInTheDocument();
     expect(screen.getByLabelText('지역을 선택해 주세요')).toBeInTheDocument();
@@ -92,7 +94,7 @@ describe('CoachApplyForm', () => {
 
   it('빈 상태로 제출하면 "활동명을 입력해 주세요." 에러 메시지 표시', async () => {
     const user = userEvent.setup();
-    render(<CoachApplyForm />);
+    render(<CoachRegisterForm />);
 
     await user.click(screen.getByRole('button', { name: /코치 가입하기/ }));
 
@@ -100,11 +102,11 @@ describe('CoachApplyForm', () => {
     expect(await screen.findByText('지역을 선택해 주세요.')).toBeInTheDocument();
   });
 
-  it('registerCoachAction이 에러를 반환하면 role="alert" 영역에 에러 표시', async () => {
+  it('coachRegisterAction이 에러를 반환하면 role="alert" 영역에 에러 표시', async () => {
     const user = userEvent.setup();
-    mockRegisterCoachAction.mockResolvedValueOnce({ error: '이미 코치로 등록된 계정입니다.' });
+    mockCoachRegisterAction.mockResolvedValueOnce({ error: '이미 코치로 등록된 계정입니다.' });
 
-    render(<CoachApplyForm />);
+    render(<CoachRegisterForm />);
 
     await user.type(screen.getByPlaceholderText('활동명을 입력해 주세요'), '테스트 코치');
     await user.selectOptions(screen.getByLabelText('지역을 선택해 주세요'), 'SEOUL');
@@ -116,11 +118,9 @@ describe('CoachApplyForm', () => {
 
   it('제출 중(isSubmitting)에는 버튼이 disabled 상태', async () => {
     const user = userEvent.setup();
-    mockRegisterCoachAction.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve(undefined), 500))
-    );
+    mockCoachRegisterAction.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve(undefined), 500)));
 
-    render(<CoachApplyForm />);
+    render(<CoachRegisterForm />);
 
     await user.type(screen.getByPlaceholderText('활동명을 입력해 주세요'), '테스트 코치');
     await user.selectOptions(screen.getByLabelText('지역을 선택해 주세요'), 'SEOUL');
