@@ -4,6 +4,7 @@ import { MapPin, Users } from 'lucide-react';
 
 import { REGION_LABEL, type LessonOffer } from '@/entities/lesson-request/lesson-request.type';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
+import { Badge } from '@/shared/ui/badge/badge';
 import { Button } from '@/shared/ui/button/button';
 import {
   Drawer,
@@ -40,14 +41,14 @@ export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDra
                   </DrawerDescription>
                 </div>
                 <div className="flex gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--green-100)] px-3 py-1 text-xs font-medium text-[var(--green-800)]">
-                    <MapPin className="size-3" />
+                  <Badge variant="brand" className="rounded-full">
+                    <MapPin />
                     {REGION_LABEL[offer.coach.region]}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--green-100)] px-3 py-1 text-xs font-medium text-[var(--green-800)]">
-                    <Users className="size-3" />
+                  </Badge>
+                  <Badge variant="brand" className="rounded-full">
+                    <Users />
                     {offer.coach.career}년 경력
-                  </span>
+                  </Badge>
                 </div>
               </div>
             </DrawerHeader>
