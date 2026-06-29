@@ -8,6 +8,7 @@ import { Button } from '@/shared/ui/button/button';
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -34,9 +35,9 @@ export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDra
                   <DrawerTitle className="text-base font-semibold">
                     {offer.coach.activityName}
                   </DrawerTitle>
-                  <p className="mt-1 text-sm text-[var(--neutral-500)]">
-                    {REGION_LABEL[offer.coach.region]}
-                  </p>
+                  <DrawerDescription className="sr-only">
+                    코치 {offer.coach.activityName}의 프로필 상세
+                  </DrawerDescription>
                 </div>
                 <div className="flex gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full bg-[var(--green-100)] px-3 py-1 text-xs font-medium text-[var(--green-800)]">
