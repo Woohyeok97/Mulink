@@ -117,4 +117,20 @@ describe('LessonService', () => {
       expect(prisma.lessonRequest.delete).not.toHaveBeenCalled();
     });
   });
+
+  describe('getMyOffers', () => {
+    it('목데이터 오퍼 목록을 반환한다', async () => {
+      const result = await service.getMyOffers('uuid-1');
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+
+      const offer = result[0];
+      expect(offer).toHaveProperty('id');
+      expect(offer).toHaveProperty('coach');
+      expect(offer.coach).toHaveProperty('activityName');
+      expect(offer).toHaveProperty('message');
+      expect(offer).toHaveProperty('price');
+    });
+  });
 });

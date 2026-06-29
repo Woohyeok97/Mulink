@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   Req,
@@ -19,7 +20,19 @@ type AuthedRequest = { user: SupabaseUser };
 export class LessonController {
   constructor(private readonly lessonService: LessonService) {}
 
-  // 학생 레슨 신청 POST 요청
+  // 레슨 신청 조회 GET 요청
+  @Get('me')
+  async getMyLessonRequest(@Req() req: AuthedRequest) {
+    return await this.lessonService.getMyLessonRequest(req.user.id);
+  }
+
+  // 내 레슨 신청에 달린 코치 오퍼 목록 GET 요청
+  @Get('me/offers')
+  getMyOffers(@Req() req: AuthedRequest) {
+    return this.lessonService.getMyOffers(req.user.id);
+  }
+
+  // 레슨 신청 POST 요청
   @Post()
   async createLessonRequest(
     @Req() req: AuthedRequest,
@@ -28,6 +41,7 @@ export class LessonController {
     return this.lessonService.createLessonRequest(req.user.id, dto);
   }
 
+  // 레슨 신청 삭제 DELETE 요청
   @Delete(':id')
   async removeLessonRequest(
     @Req() req: AuthedRequest,
