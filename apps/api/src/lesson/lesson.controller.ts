@@ -28,8 +28,8 @@ export class LessonController {
 
   // 내 레슨 신청에 달린 코치 오퍼 목록 GET 요청
   @Get('me/offers')
-  getMyOffers(@Req() req: AuthedRequest) {
-    return this.lessonService.getMyOffers(req.user.id);
+  getMyLessonOffers() {
+    return this.lessonService.getMyLessonOffers();
   }
 
   // 레슨 신청 POST 요청

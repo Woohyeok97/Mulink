@@ -120,7 +120,7 @@ describe('LessonService', () => {
 
   describe('getMyOffers', () => {
     it('목데이터 오퍼 목록을 반환한다', async () => {
-      const result = await service.getMyOffers('uuid-1');
+      const result = service.getMyLessonOffers();
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
@@ -130,7 +130,7 @@ describe('LessonService', () => {
       expect(offer).toHaveProperty('coach');
       expect(offer.coach).toHaveProperty('activityName');
       expect(offer).toHaveProperty('message');
-      expect(offer).toHaveProperty('price');
+      expect(offer.coach).toHaveProperty('career');
     });
   });
 });
