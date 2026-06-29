@@ -70,6 +70,7 @@ features/lesson-me/ui/
 ├── ApplicationSummary.tsx            # 좌측 요약 카드
 ├── ProposalCard.tsx                  # 코치 제안 카드
 ├── CoachProfileDrawer.tsx            # 코치 상세 드로어 (버튼 렌더, 동작 로직 없음)
+├── AcceptCoachDialog.tsx             # "이 코치와 매칭할까요?" 다이얼로그 (수락 확정 로직 없음)
 └── EmptyApplication.tsx              # 신청 없을 때 (메시지 + "레슨 신청하기" 버튼)
 ```
 
@@ -92,21 +93,24 @@ features/lesson-me/ui/
 
 ## UI 컴포넌트 상세
 
-`shared/ui` 우선 사용: `drawer`(코치 프로필), `avatar` 또는 이니셜 원형, `button`, `badge`. 아이콘은 lucide(`MapPin`, `Music`, `Target`, `CalendarDays`, `Clock`, `Users`)로 시안 인라인 SVG를 대체.
+`shared/ui` 우선 사용: `drawer`(코치 프로필), `dialog`(수락 확인), `avatar` 또는 이니셜 원형, `button`, `badge`. 아이콘은 lucide(`MapPin`, `Music`, `Target`, `CalendarDays`, `Clock`, `Users`, `Check`)로 시안 인라인 SVG를 대체.
+
+**상호작용 흐름**: 카드 "프로필 보기" → `CoachProfileDrawer` 열림 → 드로어 하단 "이 코치 수락하기" → `AcceptCoachDialog` 열림("이 코치와 매칭할까요?") → "수락 확정"(동작 없음) / "취소". 이 흐름의 상태는 모두 `LessonMeView`에서 관리한다.
 
 스타일은 Tailwind 클래스 + globals.css 토큰(`--green-*`, `--neutral-*`, `--radius-*`, `--shadow-*`)으로. `style` 속성 대신 클래스 사용.
 
-- **LessonMeView** (`'use client'`): 레이아웃 A 컨테이너. `selectedCoach` 상태(드로어용)만 `useState`로 관리. 제안 리스트가 비어 있으면 시안 EmptyState("아직 제안이 없어요") 표시. 서브 컴포넌트는 파일 밖(별도 파일)으로 분리해 `rerender-no-inline-components` 준수, 메인 컴포넌트를 파일 상단 배치(CS-3).
+- **LessonMeView** (`'use client'`): 레이아웃 A 컨테이너. 드로어용 `selectedCoach`와 수락 다이얼로그용 `acceptCoach`(또는 dialog open) 상태를 `useState`로 관리. 제안 리스트가 비어 있으면 시안 EmptyState("아직 제안이 없어요") 표시. 서브 컴포넌트는 파일 밖(별도 파일)으로 분리해 `rerender-no-inline-components` 준수, 메인 컴포넌트를 파일 상단 배치(CS-3).
 - **ApplicationSummary**: 신청일/지역/장르/목표 정보 행. (수락 범위 제외이므로 시안의 "신청 삭제" 버튼은 넣지 않음 — 조회 전용)
 - **ProposalCard**: 아바타 + `activityName` + (지역 라벨 · `career`년 경력) + 메시지 + "프로필 보기" 버튼. hover 효과는 `--shadow-*` 토큰. map 콜백 파라미터는 `offer`로(CS-2).
-- **CoachProfileDrawer**: `shared/ui/drawer`의 `direction="right"`. 코치 상세 표시. 하단 "카톡 상담" / "이 코치 수락하기" 버튼은 **렌더하되 onClick 동작 없음**(추후 기능 연결). 닫기만 동작.
+- **CoachProfileDrawer**: `shared/ui/drawer`의 `direction="right"`. 코치 상세 표시. 하단 "카톡 상담" 버튼은 **렌더하되 동작 없음**. "이 코치 수락하기" 버튼은 클릭 시 드로어를 닫고 `AcceptCoachDialog`를 연다(UI 흐름까지만 — 실제 수락 API 호출은 없음). 닫기 동작.
+- **AcceptCoachDialog**: `shared/ui/dialog`. 제목 "이 코치와 매칭할까요?", 코치 요약(아바타·이름·지역·경력), "취소"/"수락 확정" 버튼. **"수락 확정"은 렌더만 하고 동작 로직 없음**(다이얼로그 닫기 정도). 시안의 "나머지 제안은 자동 거절" 안내 문구 포함.
 - **EmptyApplication**: "아직 신청한 레슨이 없어요" 메시지 + "레슨 신청하기" 버튼(→ `/lesson/register`, next `Link`).
 
 ---
 
 ## 범위 밖 (이번 작업 제외)
 
-- 레슨 제안 수락 / 매칭 완료 / 신청 삭제 등 상태 변경 로직
+- 레슨 제안 수락 / 매칭 완료 / 신청 삭제 등 상태 변경 **로직** (수락 다이얼로그 UI 흐름은 구현하되, "수락 확정" 버튼에 API 호출/상태 변경 로직은 달지 않음)
 - 신청 상태(waiting/proposals/matched) 개념 — API 미구현
 - 코치 1:1 카톡 상담 연결
 - offers는 백엔드가 임시 Mock을 반환하므로 그대로 표시
@@ -120,6 +124,7 @@ features/lesson-me/ui/
    - 좌측 요약 카드에 신청일/지역/장르/목표가 보이는지
    - 우측에 Mock 코치 제안 3건이 카드로 렌더되는지
    - "프로필 보기" → 우측 드로어가 열리고 코치 상세가 보이는지, 닫기 동작
+   - 드로어 "이 코치 수락하기" → 드로어 닫히고 `AcceptCoachDialog`("이 코치와 매칭할까요?")가 열리는지, "수락 확정"/"취소" 클릭 시 다이얼로그가 닫히는지(수락 API 호출은 없음)
    - 데스크탑 2단 / 모바일(<900px) 1단 전환 확인
 3. 신청 내역 없는 계정으로 접속 → "레슨 신청하기" 버튼이 있는 빈 상태 화면, 버튼 클릭 시 `/lesson/register` 이동
 4. 비로그인 / 코치 계정 접속 → `/`로 redirect
