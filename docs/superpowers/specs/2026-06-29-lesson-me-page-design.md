@@ -58,6 +58,26 @@ Claude Design 시안(`Lesson Proposals.html`, **레이아웃 A — Split Sidebar
 
 ---
 
+## Step 0 — shared/ui dialog/drawer 스타일 정돈 (선행 작업)
+
+페이지 구현에 앞서, 시안의 모달/드로어 외형을 `shared/ui`의 공용 `dialog`/`drawer` 컴포넌트에 반영한다. 공용 컴포넌트라 다른 페이지에도 영향을 주므로, **시안 픽셀을 하드코딩하지 않고 globals.css 디자인 토큰 기준으로 근사**한다(토큰 중심 정돈).
+
+**시안 참고값** — 모달: `border-radius 22px`, 큰 그림자(`0 24px 60px`), 진한 오버레이(`rgba(20,30,22,.45)` + blur). 드로어: 우측 `width 420px`, `-8px 0 48px` 그림자, 오버레이 `rgba(20,30,22,.3)`.
+
+**`shared/ui/dialog/dialog.tsx`**
+- `DialogOverlay`: `bg-black/10` → `bg-foreground/40` (시안의 진한 오버레이 근사). 기존 backdrop-blur 유지.
+- `DialogContent`: `rounded-xl` → `rounded-2xl`(시안 22px ≈ `--radius-xl`), `ring-1 ring-foreground/10` → `shadow-xl`(`--shadow-xl`이 시안 큰 그림자와 거의 일치), 패딩은 토큰 기준 상향(`p-4` → `p-6`).
+
+**`shared/ui/drawer/drawer.tsx`**
+- `DrawerOverlay`: `bg-black/10` → `bg-foreground/30`.
+- `DrawerContent`: right/left 방향 `sm:max-w-sm`(384px) → `sm:max-w-md`(448px, 시안 420px 근사), 그림자 `shadow-xl` 추가.
+
+토큰에 없는 정확한 값(420px, 시안 오버레이 색)은 기존 토큰(`--shadow-xl`, `--radius-xl`, `foreground` 별칭)으로 근사한다. **신규 토큰은 추가하지 않는다**(토큰 중심 정돈 방침). 변경은 외형 className에 국한하고, 컴포넌트 구조/props는 건드리지 않는다.
+
+참고: `dialog`/`drawer`는 현재 코드베이스 어디에서도 사용되지 않아(이번 페이지가 첫 도입처) Step 0 외형 변경의 부수효과 위험은 없다.
+
+---
+
 ## 아키텍처 & 파일 구조
 
 ```
@@ -119,6 +139,7 @@ features/lesson-me/ui/
 
 ## Verification
 
+0. Step 0 확인: dialog/drawer 스타일 변경 후 기존에 이 컴포넌트를 쓰는 페이지가 깨지지 않는지(외형만 변경) 점검
 1. `pnpm turbo dev --filter=@mulink/web` 로 dev 서버 실행
 2. STUDENT 계정 + 신청 내역 있는 상태로 `/lesson/me` 접속:
    - 좌측 요약 카드에 신청일/지역/장르/목표가 보이는지
