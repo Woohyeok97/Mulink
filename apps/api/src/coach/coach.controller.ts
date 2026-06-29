@@ -11,7 +11,7 @@ type AuthedRequest = { user: SupabaseUser };
 export class CoachController {
   constructor(private readonly coachService: CoachService) {}
 
-  // 토큰 주인을 코치로 등록한다 (body로 userId를 받지 않음 — 위조 방지).
+  // 코치 신청 POST 요청 (body로 userId를 받지 않음 — 위조 방지)
   @Post()
   async registerCoach(
     @Req() req: AuthedRequest,

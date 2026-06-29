@@ -29,10 +29,10 @@ export class LessonController {
   }
 
   @Delete(':id')
-  async cancelLessonRequest(
+  async removeLessonRequest(
     @Req() req: AuthedRequest,
     @Param('id') id: string,
   ) {
-    return this.lessonService.cancelLessonRequest(req.user.id, id);
+    return this.lessonService.removeLessonRequest(req.user.id, id);
   }
 }

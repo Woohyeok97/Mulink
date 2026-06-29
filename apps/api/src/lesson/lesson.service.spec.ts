@@ -77,14 +77,22 @@ describe('LessonService', () => {
     expect(prisma.lessonRequest.create).not.toHaveBeenCalled();
   });
 
-  describe('cancelLessonRequest', () => {
+  describe('removeLessonRequest', () => {
     it('정상 취소 시 lessonRequest를 삭제하고 반환한다', async () => {
-      prisma.lessonRequest.findUnique.mockResolvedValue({ id: 'req-1', studentId: 'uuid-1' });
-      prisma.lessonRequest.delete.mockResolvedValue({ id: 'req-1', studentId: 'uuid-1' });
+      prisma.lessonRequest.findUnique.mockResolvedValue({
+        id: 'req-1',
+        studentId: 'uuid-1',
+      });
+      prisma.lessonRequest.delete.mockResolvedValue({
+        id: 'req-1',
+        studentId: 'uuid-1',
+      });
 
-      const result = await service.cancelLessonRequest('uuid-1', 'req-1');
+      const result = await service.removeLessonRequest('uuid-1', 'req-1');
 
-      expect(prisma.lessonRequest.delete).toHaveBeenCalledWith({ where: { id: 'req-1' } });
+      expect(prisma.lessonRequest.delete).toHaveBeenCalledWith({
+        where: { id: 'req-1' },
+      });
       expect(result.id).toBe('req-1');
     });
 
@@ -92,16 +100,19 @@ describe('LessonService', () => {
       prisma.lessonRequest.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.cancelLessonRequest('uuid-1', 'not-exist'),
+        service.removeLessonRequest('uuid-1', 'not-exist'),
       ).rejects.toThrow(NotFoundException);
       expect(prisma.lessonRequest.delete).not.toHaveBeenCalled();
     });
 
     it('다른 사람의 신청이면 ForbiddenException을 던진다', async () => {
-      prisma.lessonRequest.findUnique.mockResolvedValue({ id: 'req-1', studentId: 'uuid-other' });
+      prisma.lessonRequest.findUnique.mockResolvedValue({
+        id: 'req-1',
+        studentId: 'uuid-other',
+      });
 
       await expect(
-        service.cancelLessonRequest('uuid-1', 'req-1'),
+        service.removeLessonRequest('uuid-1', 'req-1'),
       ).rejects.toThrow(ForbiddenException);
       expect(prisma.lessonRequest.delete).not.toHaveBeenCalled();
     });

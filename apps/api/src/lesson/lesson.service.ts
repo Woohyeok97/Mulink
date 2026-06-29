@@ -41,7 +41,7 @@ export class LessonService {
   }
 
   // 레슨 신청 취소
-  async cancelLessonRequest(userId: string, lessonRequestId: string) {
+  async removeLessonRequest(userId: string, lessonRequestId: string) {
     const lessonRequest = await this.prisma.lessonRequest.findUnique({
       where: { id: lessonRequestId },
     });
