@@ -23,9 +23,11 @@ export function AcceptCoachDialog({ offer, onClose }: AcceptCoachDialogProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>이 코치와 매칭할까요?</DialogTitle>
-          <DialogDescription>
-            {offer?.coach.activityName} 코치의 제안을 수락하면 나머지 제안은 자동으로 거절돼요.
-          </DialogDescription>
+          {offer && (
+            <DialogDescription>
+              {offer.coach.activityName} 코치의 제안을 수락하면 나머지 제안은 자동으로 거절돼요.
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {offer && (

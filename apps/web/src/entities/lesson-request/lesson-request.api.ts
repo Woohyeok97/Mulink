@@ -23,10 +23,14 @@ export const getMyLessonRequest = cache(async (): Promise<LessonRequest | null> 
   const text = await response.text();
   if (!text) return null;
 
-  const data = JSON.parse(text) as LessonRequest | null;
-  if (!data || !data.id) return null;
-
-  return data;
+  // 응답이 정상 JSON이 아닐 수 있으므로(프록시 오류 페이지 등) 파싱 실패는 null로 처리한다.
+  try {
+    const data = JSON.parse(text) as LessonRequest | null;
+    if (!data || !data.id) return null;
+    return data;
+  } catch {
+    return null;
+  }
 });
 
 // 현재 로그인한 학생의 레슨 신청에 달린 코치 제안 리스트를 가져온다.
