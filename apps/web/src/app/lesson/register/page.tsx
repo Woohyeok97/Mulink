@@ -15,5 +15,9 @@ export default async function LessonRegisterPage() {
     return redirect('/');
   }
 
-  return <LessonRegisterForm />;
+  return (
+    <div className="flex flex-1 flex-col">
+      <LessonRegisterForm />
+    </div>
+  );
 }

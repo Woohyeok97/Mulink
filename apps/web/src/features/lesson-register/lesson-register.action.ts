@@ -3,9 +3,7 @@
 import { createClient } from '@/shared/lib/supabase/server';
 import type { LessonRegisterFormType } from './lesson-register.schema';
 
-export async function lessonRegisterAction(
-  data: LessonRegisterFormType,
-): Promise<{ error: string } | void> {
+export async function lessonRegisterAction(data: LessonRegisterFormType): Promise<{ error: string } | void> {
   const supabase = await createClient();
   // getSession은 쿠키 기반 세션을 그대로 읽으며 서버 재검증 없음
   // Bearer 토큰을 백엔드에 전달해야 하는 구조상 getUser() 대신 사용

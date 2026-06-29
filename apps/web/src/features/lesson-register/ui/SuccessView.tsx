@@ -8,8 +8,8 @@ type SuccessViewProps = {
 };
 
 export function SuccessView({ region, genre }: SuccessViewProps) {
-  const regionLabel = REGIONS.find((item) => item.value === region)?.label ?? region;
-  const genreLabel = GENRES.find((item) => item.value === genre)?.label ?? genre;
+  const regionLabel = REGIONS.find(item => item.value === region)?.label ?? region;
+  const genreLabel = GENRES.find(item => item.value === genre)?.label ?? genre;
 
   return (
     <div className="flex w-full max-w-130 flex-col gap-7">
@@ -18,11 +18,9 @@ export function SuccessView({ region, genre }: SuccessViewProps) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-extrabold tracking-tight text-(--green-800)">
-          신청이 완료됐어요!
-        </h2>
+        <h2 className="text-2xl font-extrabold tracking-tight text-(--green-800)">신청이 완료됐어요!</h2>
         <p className="text-sm leading-relaxed text-(--neutral-500)">
-          AI가 나에게 맞는 코치를 찾고 있어요.
+          나에게 맞는 코치를 찾고 있어요.
           <br />
           잠시 후 매칭 결과를 알려드릴게요.
         </p>
@@ -35,8 +33,7 @@ export function SuccessView({ region, genre }: SuccessViewProps) {
 
       <Link
         href="#"
-        className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-(--green-700) hover:text-(--green-800)"
-      >
+        className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-(--green-700) hover:text-(--green-800)">
         현황 보러가기
         <ArrowRight className="size-4" />
       </Link>

@@ -3,25 +3,17 @@
 import { useState } from 'react';
 import { useForm, useController } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+// components
+import { SidePanel } from './SidePanel';
+import { SuccessView } from './SuccessView';
 import { MapPin, Music, Target, ArrowRight } from 'lucide-react';
 import { Button } from '@/shared/ui/button/button';
 import { Textarea } from '@/shared/ui/textarea/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select/select';
-import {
-  LessonRegisterSchema,
-  REGIONS,
-  GENRES,
-  type LessonRegisterFormType,
-} from '../lesson-register.schema';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select/select';
+// schemas
+import { LessonRegisterSchema, REGIONS, GENRES, type LessonRegisterFormType } from '../lesson-register.schema';
+// actions
 import { lessonRegisterAction } from '../lesson-register.action';
-import { SidePanel } from './SidePanel';
-import { SuccessView } from './SuccessView';
 
 export function LessonRegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -32,16 +24,21 @@ export function LessonRegisterForm() {
     defaultValues: {
       region: undefined,
       genre: undefined,
-      goal: '',
-    },
+      goal: ''
+    }
   });
 
-  const { errors, isSubmitting } = formState;
+  // 폼 상태
+  const { isSubmitting, isValid } = formState;
 
+  // 지역 선택 controller
   const { field: regionField } = useController({ name: 'region', control });
+
+  // 선호 장르 controller
   const { field: genreField } = useController({ name: 'genre', control });
 
-  const onSubmit = handleSubmit(async (data) => {
+  // 레슨 신청 핸들러
+  const onSubmit = handleSubmit(async data => {
     setServerError(null);
     const result = await lessonRegisterAction(data);
     if (result?.error) {
@@ -51,8 +48,11 @@ export function LessonRegisterForm() {
     setSubmitted(data);
   });
 
+  // 레슨 신청 버튼 활성화 상태
+  const canSubmit = [isValid].every(Boolean);
+
   return (
-    <div className="flex min-h-screen flex-col sm:flex-row">
+    <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
       <SidePanel control={control} />
 
       <main className="flex flex-1 flex-col justify-start overflow-y-auto bg-white px-5 py-7 sm:justify-center sm:px-10 sm:py-11 lg:px-22 lg:py-16">
@@ -63,10 +63,7 @@ export function LessonRegisterForm() {
         ) : (
           <form onSubmit={onSubmit} noValidate className="mx-auto flex w-full max-w-130 flex-col">
             {serverError ? (
-              <div
-                role="alert"
-                className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive"
-              >
+              <div role="alert" className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive">
                 {serverError}
               </div>
             ) : null}
@@ -76,12 +73,8 @@ export function LessonRegisterForm() {
               <span className="mb-3.5 inline-flex items-center rounded-full bg-(--green-100) px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-(--green-700)">
                 LESSON APPLY
               </span>
-              <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight text-(--green-800)">
-                신청서 작성
-              </h1>
-              <p className="text-sm text-(--neutral-500)">
-                3분이면 충분해요. 아래 항목을 입력해 주세요.
-              </p>
+              <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight text-(--green-800)">신청서 작성</h1>
+              <p className="text-sm text-(--neutral-500)">3분이면 충분해요. 아래 항목을 입력해 주세요.</p>
             </div>
 
             <div className="flex flex-col gap-6">
@@ -89,32 +82,22 @@ export function LessonRegisterForm() {
               <div className="flex flex-col gap-2">
                 <label
                   htmlFor="region"
-                  className="flex items-center gap-1.5 text-[13px] font-semibold text-(--neutral-700)"
-                >
+                  className="flex items-center gap-1.5 text-[13px] font-semibold text-(--neutral-700)">
                   <MapPin className="size-3.5 text-(--green-600)" />
                   지역
                 </label>
                 <Select value={regionField.value ?? undefined} onValueChange={regionField.onChange}>
-                  <SelectTrigger
-                    id="region"
-                    className="w-full"
-                    aria-invalid={errors.region ? 'true' : undefined}
-                  >
+                  <SelectTrigger id="region" className="w-full">
                     <SelectValue placeholder="지역을 선택해 주세요" />
                   </SelectTrigger>
                   <SelectContent>
-                    {REGIONS.map((region) => (
+                    {REGIONS.map(region => (
                       <SelectItem key={region.value} value={region.value}>
                         {region.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.region ? (
-                  <p role="alert" className="text-xs text-destructive">
-                    {errors.region.message}
-                  </p>
-                ) : null}
               </div>
 
               {/* 선호 장르 (단일 선택 칩) */}
@@ -124,7 +107,7 @@ export function LessonRegisterForm() {
                   선호 장르
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {GENRES.map((genre) => {
+                  {GENRES.map(genre => {
                     const selected = genreField.value === genre.value;
                     return (
                       <button
@@ -135,26 +118,19 @@ export function LessonRegisterForm() {
                           selected
                             ? 'border-(--green-800) bg-(--green-800) font-semibold text-white'
                             : 'border-(--neutral-200) bg-white text-(--neutral-600) hover:border-(--green-400) hover:bg-(--green-50) hover:text-(--green-700)'
-                        }`}
-                      >
+                        }`}>
                         {genre.label}
                       </button>
                     );
                   })}
                 </div>
-                {errors.genre ? (
-                  <p role="alert" className="text-xs text-destructive">
-                    {errors.genre.message}
-                  </p>
-                ) : null}
               </div>
 
               {/* 레슨 목표 */}
               <div className="flex flex-col gap-2">
                 <label
                   htmlFor="goal"
-                  className="flex items-center gap-1.5 text-[13px] font-semibold text-(--neutral-700)"
-                >
+                  className="flex items-center gap-1.5 text-[13px] font-semibold text-(--neutral-700)">
                   <Target className="size-3.5 text-(--green-600)" />
                   레슨 목표
                 </label>
@@ -162,14 +138,8 @@ export function LessonRegisterForm() {
                   id="goal"
                   rows={4}
                   placeholder="예: 음치 탈출, 가수 오디션 준비, 취미로 노래 즐기기..."
-                  aria-invalid={errors.goal ? 'true' : undefined}
                   {...register('goal')}
                 />
-                {errors.goal ? (
-                  <p role="alert" className="text-xs text-destructive">
-                    {errors.goal.message}
-                  </p>
-                ) : null}
               </div>
             </div>
 
@@ -179,10 +149,10 @@ export function LessonRegisterForm() {
                 type="submit"
                 variant="emphasis"
                 size="lg"
+                disabled={!canSubmit}
                 loading={isSubmitting}
                 rightIcon={<ArrowRight className="size-4.5" />}
-                className="w-full rounded-full"
-              >
+                className="w-full rounded-full">
                 코치 매칭 받기
               </Button>
             </div>
