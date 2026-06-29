@@ -88,8 +88,7 @@ model LessonRequest {
   region       Region // 희망 레슨 지역
   goal         String // 레슨 목표
   genre        Genre  // 선호 장르
-  voiceAudioUrl     String // 녹음 파일 url
-  createdAt    DateTime   @default(now()) // 레슨 신청일자 (업로드 횟수 제한/복구 정렬에 사용)
+  createdAt    DateTime   @default(now()) // 레슨 신청일자
 
   @@index([studentId])
 }

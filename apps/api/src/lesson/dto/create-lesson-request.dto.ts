@@ -4,5 +4,4 @@ export interface CreateLessonRequestDto {
   region: Region;
   goal: string;
   genre: Genre;
-  voiceAudioUrl: string;
 }

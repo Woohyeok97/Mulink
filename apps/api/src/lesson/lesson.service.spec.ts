@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,7 +19,6 @@ describe('LessonService', () => {
     region: 'SEOUL' as const,
     goal: '음정 교정',
     genre: 'POP' as const,
-    voiceAudioUrl: 'https://example.com/audio.mp3',
   };
 
   beforeEach(() => jest.clearAllMocks());
@@ -32,7 +32,6 @@ describe('LessonService', () => {
       region: 'SEOUL',
       goal: '음정 교정',
       genre: 'POP',
-      voiceAudioUrl: 'https://example.com/audio.mp3',
       createdAt: new Date(),
     });
 
@@ -44,10 +43,16 @@ describe('LessonService', () => {
         region: 'SEOUL',
         goal: '음정 교정',
         genre: 'POP',
-        voiceAudioUrl: 'https://example.com/audio.mp3',
       },
     });
     expect(result.id).toBe('req-1');
+  });
+
+  it('목표가 빈 문자열이면 BadRequestException을 던진다', async () => {
+    await expect(
+      service.createLessonRequest('uuid-1', { ...validDto, goal: '  ' }),
+    ).rejects.toThrow(BadRequestException);
+    expect(prisma.lessonRequest.create).not.toHaveBeenCalled();
   });
 
   it('User가 없으면 NotFoundException을 던진다', async () => {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -11,6 +12,10 @@ export class LessonService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createLessonRequest(userId: string, dto: CreateLessonRequestDto) {
+    if (!dto.goal?.trim()) {
+      throw new BadRequestException('레슨 목표를 입력해주세요.');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('유저를 찾을 수 없습니다.');
@@ -27,9 +32,8 @@ export class LessonService {
       data: {
         studentId: userId,
         region: dto.region,
-        goal: dto.goal,
+        goal: dto.goal.trim(),
         genre: dto.genre,
-        voiceAudioUrl: dto.voiceAudioUrl,
       },
     });
   }
