@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import type { CreateLessonRequestDto } from './dto/create-lesson-request.dto';
 export class LessonService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // 레슨 신청
   async createLessonRequest(userId: string, dto: CreateLessonRequestDto) {
     if (!dto.goal?.trim()) {
       throw new BadRequestException('레슨 목표를 입력해주세요.');
@@ -36,5 +38,19 @@ export class LessonService {
         genre: dto.genre,
       },
     });
+  }
+
+  // 레슨 신청 취소
+  async cancelLessonRequest(userId: string, lessonRequestId: string) {
+    const lessonRequest = await this.prisma.lessonRequest.findUnique({
+      where: { id: lessonRequestId },
+    });
+    if (!lessonRequest) {
+      throw new NotFoundException('레슨 신청을 찾을 수 없습니다.');
+    }
+    if (lessonRequest.studentId !== userId) {
+      throw new ForbiddenException('본인의 레슨 신청만 취소할 수 있습니다.');
+    }
+    return this.prisma.lessonRequest.delete({ where: { id: lessonRequestId } });
   }
 }
