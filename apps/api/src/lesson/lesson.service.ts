@@ -61,6 +61,7 @@ export class LessonService {
     return this.prisma.lessonRequest.delete({ where: { id: lessonRequestId } });
   }
 
+  // 레슨 제안 리스트 조회 (임시 Mock)
   getMyLessonOffers(): {
     id: string;
     coach: { id: string; activityName: string; region: string; career: number };

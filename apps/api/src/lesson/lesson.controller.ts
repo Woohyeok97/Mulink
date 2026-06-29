@@ -26,12 +26,6 @@ export class LessonController {
     return await this.lessonService.getMyLessonRequest(req.user.id);
   }
 
-  // 내 레슨 신청에 달린 코치 오퍼 목록 GET 요청
-  @Get('me/offers')
-  getMyLessonOffers() {
-    return this.lessonService.getMyLessonOffers();
-  }
-
   // 레슨 신청 POST 요청
   @Post()
   async createLessonRequest(
@@ -48,5 +42,11 @@ export class LessonController {
     @Param('id') id: string,
   ) {
     return this.lessonService.removeLessonRequest(req.user.id, id);
+  }
+
+  // 내 레슨 신청에 달린 레슨 제안 리스트 GET 요청 (임시 Mock)
+  @Get('me/offers')
+  getMyLessonOffers() {
+    return this.lessonService.getMyLessonOffers();
   }
 }
