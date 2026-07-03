@@ -66,11 +66,11 @@ export class LessonRequestService {
     // 2단계: coach.coachProfile 한 겹을 벗겨 응답을 평탄화 (내부 테이블 구조 은닉)
     return {
       ...request,
-      proposals: request.proposals.map((p) => ({
-        id: p.id,
-        message: p.message,
-        createdAt: p.createdAt,
-        coachProfile: p.coach.coachProfile, // { activityName, region }
+      proposals: request.proposals.map((proposal) => ({
+        id: proposal.id,
+        message: proposal.message,
+        createdAt: proposal.createdAt,
+        coachProfile: proposal.coach.coachProfile, // { activityName, region }
       })),
     };
   }
@@ -93,10 +93,14 @@ export class LessonRequestService {
       where: { coachId: userId },
       select: { requestId: true },
     });
+
     const proposedIds = new Set(myProposals.map((p) => p.requestId));
 
     // 4단계: 각 신청에 isProposed 플래그를 붙여 반환
-    return requests.map((r) => ({ ...r, isProposed: proposedIds.has(r.id) }));
+    return requests.map((request) => ({
+      ...request,
+      isProposed: proposedIds.has(request.id),
+    }));
   }
 
   // 레슨 신청 취소

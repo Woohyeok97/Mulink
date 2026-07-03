@@ -14,7 +14,7 @@ export class LessonProposalService {
   constructor(private readonly prisma: PrismaService) {}
 
   // 레슨 제안 생성 (1신청 1제안)
-  async createProposal(
+  async createLessonProposal(
     userId: string,
     requestId: string,
     dto: CreateLessonProposalDto,

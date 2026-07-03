@@ -1,4 +1,5 @@
 import { MessageCircle, Mic } from 'lucide-react';
+import { DevLoginPanel } from './DevLoginPanel'; // ⚠️ 개발 전용 (제거 대상)
 
 const WAVE_HEIGHTS = [10, 18, 26, 20, 32, 24, 16, 28, 22, 14, 30, 20, 12, 24, 18];
 
@@ -51,6 +52,9 @@ export default function LoginPage() {
           <MessageCircle size={20} fill="rgba(0,0,0,0.85)" stroke="none" aria-hidden="true" />
           카카오로 시작하기
         </a>
+
+        {/* ⚠️ 개발 전용 로그인 (제거 대상) */}
+        {process.env.NODE_ENV === 'development' && <DevLoginPanel />}
       </div>
     </div>
   );

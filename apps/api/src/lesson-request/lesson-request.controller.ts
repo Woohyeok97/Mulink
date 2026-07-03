@@ -20,12 +20,6 @@ type AuthedRequest = { user: SupabaseUser };
 export class LessonRequestController {
   constructor(private readonly lessonRequestService: LessonRequestService) {}
 
-  // 모집중 레슨 신청 목록 조회 GET 요청 (코치)
-  @Get()
-  async getOpenLessonRequests(@Req() req: AuthedRequest) {
-    return this.lessonRequestService.getOpenLessonRequests(req.user.id);
-  }
-
   // 레슨 신청 조회 GET 요청
   @Get('me')
   async getMyLessonRequest(@Req() req: AuthedRequest) {
@@ -48,5 +42,11 @@ export class LessonRequestController {
     @Param('id') id: string,
   ) {
     return this.lessonRequestService.removeLessonRequest(req.user.id, id);
+  }
+
+  // 모집중 레슨 신청 목록 조회 GET 요청 (코치)
+  @Get()
+  async getOpenLessonRequests(@Req() req: AuthedRequest) {
+    return this.lessonRequestService.getOpenLessonRequests(req.user.id);
   }
 }

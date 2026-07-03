@@ -18,7 +18,7 @@ export class LessonProposalController {
     @Param('id') requestId: string,
     @Body() dto: CreateLessonProposalDto,
   ) {
-    return this.lessonProposalService.createProposal(
+    return this.lessonProposalService.createLessonProposal(
       req.user.id,
       requestId,
       dto,
