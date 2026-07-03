@@ -40,11 +40,61 @@ export class LessonRequestService {
     });
   }
 
-  // 내 레슨 신청 조회
+  // 내 레슨 신청 조회 (받은 제안 + 각 제안 코치 프로필까지 한 번에)
   async getMyLessonRequest(userId: string) {
-    return this.prisma.lessonRequest.findFirst({
+    // 1단계: 내 신청 + 제안(최신순) + 각 제안 코치의 프로필을 한 방에 조회
+    const request = await this.prisma.lessonRequest.findFirst({
       where: { studentId: userId },
+      include: {
+        proposals: {
+          orderBy: { createdAt: 'desc' }, // 최신순 (기획)
+          select: {
+            id: true,
+            message: true,
+            createdAt: true,
+            coach: {
+              select: { coachProfile: { select: { activityName: true, region: true } } },
+            },
+          },
+        },
+      },
     });
+    if (!request) return null;
+
+    // 2단계: coach.coachProfile 한 겹을 벗겨 응답을 평탄화 (내부 테이블 구조 은닉)
+    return {
+      ...request,
+      proposals: request.proposals.map((p) => ({
+        id: p.id,
+        message: p.message,
+        createdAt: p.createdAt,
+        coachProfile: p.coach.coachProfile, // { activityName, region }
+      })),
+    };
+  }
+
+  // 모집중 레슨 신청 목록 조회 (코치) — 각 신청에 내가 이미 제안했는지(isProposed) 표시
+  async getOpenLessonRequests(userId: string) {
+    // 1단계: 코치 자격 확인 — 학생은 이 화면을 쓰지 않음
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.role !== 'COACH') {
+      throw new ForbiddenException('코치만 접근할 수 있습니다.');
+    }
+
+    // 2단계: 모집중 신청 전체 조회 (최신순)
+    const requests = await this.prisma.lessonRequest.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 3단계: 이 코치가 이미 제안한 신청 id 집합
+    const myProposals = await this.prisma.lessonProposal.findMany({
+      where: { coachId: userId },
+      select: { requestId: true },
+    });
+    const proposedIds = new Set(myProposals.map((p) => p.requestId));
+
+    // 4단계: 각 신청에 isProposed 플래그를 붙여 반환
+    return requests.map((r) => ({ ...r, isProposed: proposedIds.has(r.id) }));
   }
 
   // 레슨 신청 취소
