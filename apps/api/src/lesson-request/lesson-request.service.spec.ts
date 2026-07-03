@@ -81,6 +81,7 @@ describe('LessonRequestService', () => {
 
   describe('getMyLessonRequest', () => {
     it('제안을 최신순으로 include하고 coachProfile로 평탄화해 반환한다', async () => {
+      const proposalCreatedAt = new Date('2026-07-03T00:00:00.000Z');
       prisma.lessonRequest.findFirst.mockResolvedValue({
         id: 'req-1',
         studentId: 'uuid-1',
@@ -92,8 +93,10 @@ describe('LessonRequestService', () => {
           {
             id: 'p-1',
             message: '안녕',
-            createdAt: new Date(),
-            coach: { coachProfile: { activityName: '김보컬', region: 'SEOUL' } },
+            createdAt: proposalCreatedAt,
+            coach: {
+              coachProfile: { activityName: '김보컬', region: 'SEOUL' },
+            },
           },
         ],
       });
@@ -111,7 +114,11 @@ describe('LessonRequestService', () => {
               message: true,
               createdAt: true,
               coach: {
-                select: { coachProfile: { select: { activityName: true, region: true } } },
+                select: {
+                  coachProfile: {
+                    select: { activityName: true, region: true },
+                  },
+                },
               },
             },
           },
@@ -121,7 +128,7 @@ describe('LessonRequestService', () => {
       expect(result!.proposals[0]).toEqual({
         id: 'p-1',
         message: '안녕',
-        createdAt: expect.any(Date),
+        createdAt: proposalCreatedAt,
         coachProfile: { activityName: '김보컬', region: 'SEOUL' },
       });
     });
@@ -134,20 +141,40 @@ describe('LessonRequestService', () => {
 
   describe('getOpenLessonRequests', () => {
     it('학생이 호출하면 ForbiddenException을 던진다', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'uuid-1', role: 'STUDENT' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'uuid-1',
+        role: 'STUDENT',
+      });
       await expect(service.getOpenLessonRequests('uuid-1')).rejects.toThrow(
         ForbiddenException,
       );
     });
 
     it('코치가 호출하면 각 신청에 isProposed를 붙여 반환한다', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'coach-1', role: 'COACH' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'coach-1',
+        role: 'COACH',
+      });
       prisma.lessonRequest.findMany.mockResolvedValue([
-        { id: 'req-1', region: 'SEOUL', goal: 'g1', genre: 'POP', createdAt: new Date() },
-        { id: 'req-2', region: 'BUSAN', goal: 'g2', genre: 'ROCK', createdAt: new Date() },
+        {
+          id: 'req-1',
+          region: 'SEOUL',
+          goal: 'g1',
+          genre: 'POP',
+          createdAt: new Date(),
+        },
+        {
+          id: 'req-2',
+          region: 'BUSAN',
+          goal: 'g2',
+          genre: 'ROCK',
+          createdAt: new Date(),
+        },
       ]);
       // 코치가 이미 req-1에 제안함
-      prisma.lessonProposal.findMany.mockResolvedValue([{ requestId: 'req-1' }]);
+      prisma.lessonProposal.findMany.mockResolvedValue([
+        { requestId: 'req-1' },
+      ]);
 
       const result = await service.getOpenLessonRequests('coach-1');
 

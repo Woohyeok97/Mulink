@@ -18,6 +18,10 @@ export class LessonProposalController {
     @Param('id') requestId: string,
     @Body() dto: CreateLessonProposalDto,
   ) {
-    return this.lessonProposalService.createProposal(req.user.id, requestId, dto);
+    return this.lessonProposalService.createProposal(
+      req.user.id,
+      requestId,
+      dto,
+    );
   }
 }
