@@ -17,12 +17,12 @@ function formatRelativeTime(isoString: string): string {
   return `${diffDays}일 전`;
 }
 
-type ProposalCardProps = {
+interface LessonProposalCardProps {
   offer: LessonOffer;
   onViewProfile: (offer: LessonOffer) => void;
-};
+}
 
-export function ProposalCard({ offer, onViewProfile }: ProposalCardProps) {
+export function LessonProposalCard({ offer, onViewProfile }: LessonProposalCardProps) {
   const { coach, message } = offer;
   const initial = coach.activityName.charAt(0);
 

@@ -19,10 +19,9 @@ import { MapPin, Users, MessageCircle } from 'lucide-react';
 interface CoachProfileDrawerProps {
   offer: LessonOffer | null;
   onClose: () => void;
-  onAccept: (offer: LessonOffer) => void;
 }
 
-export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDrawerProps) {
+export function CoachProfileDrawer({ offer, onClose }: CoachProfileDrawerProps) {
   return (
     <Drawer
       direction="right"
@@ -94,9 +93,6 @@ export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDra
                 leftIcon={<MessageCircle size={20} fill="rgba(0,0,0,0.85)" stroke="none" aria-hidden="true" />}
                 onClick={() => {}}>
                 카톡 1:1 상담
-              </Button>
-              <Button variant="emphasis" size="default" onClick={() => onAccept(offer)}>
-                이 코치 수락하기
               </Button>
             </DrawerFooter>
           </>

@@ -3,11 +3,10 @@
 import { useState } from 'react';
 // components
 import { Badge } from '@/shared/ui/badge/badge';
-import { AcceptCoachDialog } from './AcceptCoachDialog';
 import { LessonRequestCard } from './LessonRequestCard';
 import { CoachProfileDrawer } from './CoachProfileDrawer';
 import { DeleteLessonDialog } from './DeleteLessonDialog';
-import { ProposalCard } from './ProposalCard';
+import { LessonProposalCard } from './LessonProposalCard';
 // icons
 import { Clock, Users } from 'lucide-react';
 // types
@@ -15,12 +14,11 @@ import { type LessonOffer, type LessonRequest } from '@/entities/lesson-request/
 
 interface MyLessonRequestViewProps {
   lesson: LessonRequest;
-  offers: LessonOffer[];
+  proposals: LessonOffer[];
 }
 
-export function MyLessonRequestView({ lesson, offers }: MyLessonRequestViewProps) {
+export function MyLessonRequestView({ lesson, proposals }: MyLessonRequestViewProps) {
   const [selectedOffer, setSelectedOffer] = useState<LessonOffer | null>(null);
-  const [acceptOffer, setAcceptOffer] = useState<LessonOffer | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleViewProfile = (offer: LessonOffer) => {
@@ -29,15 +27,6 @@ export function MyLessonRequestView({ lesson, offers }: MyLessonRequestViewProps
 
   const handleDrawerClose = () => {
     setSelectedOffer(null);
-  };
-
-  const handleAccept = (offer: LessonOffer) => {
-    setSelectedOffer(null);
-    setAcceptOffer(offer);
-  };
-
-  const handleDialogClose = () => {
-    setAcceptOffer(null);
   };
 
   const handleDeleteConfirm = () => {
@@ -58,11 +47,11 @@ export function MyLessonRequestView({ lesson, offers }: MyLessonRequestViewProps
           <div className="mb-4 flex h-8 items-center gap-2.5">
             <h1 className="text-base font-bold text-(--neutral-800)">코치 제안</h1>
             <Badge variant="brand" dot>
-              {offers.length === 0 ? '검토 중' : `제안 ${offers.length}개 도착`}
+              {proposals.length === 0 ? '검토 중' : `제안 ${proposals.length}개 도착`}
             </Badge>
           </div>
 
-          {offers.length === 0 ? (
+          {proposals.length === 0 ? (
             // 레슨 제안이 없는 경우
             <div className="flex flex-col items-center gap-5 rounded-2xl border border-(--neutral-200) bg-white py-16 text-center">
               <div className="flex size-20 items-center justify-center rounded-full bg-(--green-50) text-(--green-300)">
@@ -87,14 +76,13 @@ export function MyLessonRequestView({ lesson, offers }: MyLessonRequestViewProps
             // 레슨 제안이 있는 경우
             <>
               <ul className="flex flex-col gap-4">
-                {offers.map(offer => (
+                {proposals.map(offer => (
                   <li key={offer.id}>
-                    <ProposalCard offer={offer} onViewProfile={handleViewProfile} />
+                    <LessonProposalCard offer={offer} onViewProfile={handleViewProfile} />
                   </li>
                 ))}
               </ul>
-              <CoachProfileDrawer offer={selectedOffer} onClose={handleDrawerClose} onAccept={handleAccept} />
-              <AcceptCoachDialog offer={acceptOffer} onClose={handleDialogClose} />
+              <CoachProfileDrawer offer={selectedOffer} onClose={handleDrawerClose} />
             </>
           )}
         </main>

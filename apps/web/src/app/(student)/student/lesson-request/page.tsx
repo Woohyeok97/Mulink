@@ -1,7 +1,7 @@
 // components
 import Link from 'next/link';
 import { Button } from '@/shared/ui/button/button';
-import { MyLessonRequestView } from '@/features/lesson-me/ui/MyLessonRequestView';
+import { MyLessonRequestView } from '@/features/lesson-request/ui/MyLessonRequestView';
 // api
 import { getMyLessonRequest } from '@/entities/lesson-request/lesson-request.api';
 
@@ -30,7 +30,7 @@ export default async function MyLessonRequestPage() {
   return (
     <div className="flex flex-1 flex-col">
       {/* 코치 제안(offers)은 lesson-proposal 기능 구현 전까지 빈 배열 */}
-      <MyLessonRequestView lesson={myLessonRequest} offers={[]} />
+      <MyLessonRequestView lesson={myLessonRequest} proposals={[]} />
     </div>
   );
 }
