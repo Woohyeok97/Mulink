@@ -165,7 +165,7 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
     "proposals": [                              // 최신순 정렬, 없으면 []
       {
         "id": "...", "message": "...", "createdAt": "...",
-        "coach": { "activityName": "...", "region": "SEOUL" }   // CoachProfile nested
+        "coachProfile": { "activityName": "...", "region": "SEOUL" }   // CoachProfile nested
       }
     ]
   }
