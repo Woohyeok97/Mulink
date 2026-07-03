@@ -1,7 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { createClient } from '@/shared/lib/supabase/server';
-import type { LessonRequest, LessonOffer } from './lesson-request.type';
+import type { LessonRequest } from './lesson-request.type';
 
 // 현재 로그인한 학생의 레슨 신청 1건을 가져온다. 비로그인이거나 신청 없으면 null.
 // cache()로 감싸 같은 요청 안에서 여러 번 호출해도 실제 실행은 1번만 일어난다.
@@ -31,22 +31,4 @@ export const getMyLessonRequest = cache(async (): Promise<LessonRequest | null> 
   } catch {
     return null;
   }
-});
-
-// 현재 로그인한 학생의 레슨 신청에 달린 코치 제안 리스트를 가져온다.
-// 비로그인이거나 오류 시 빈 배열 반환.
-export const getMyLessonOffers = cache(async (): Promise<LessonOffer[]> => {
-  const supabase = await createClient();
-
-  const { data: { session } } = await supabase.auth.getSession();
-  const accessToken = session?.access_token;
-  if (!accessToken) return [];
-
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lesson-requests/me/offers`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: 'no-store',
-  });
-  if (!response.ok) return [];
-
-  return (await response.json()) as LessonOffer[];
 });

@@ -4,9 +4,9 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { LessonService } from './lesson.service';
+import { LessonRequestService } from './lesson-request.service';
 
-describe('LessonService', () => {
+describe('LessonRequestService', () => {
   const prisma = {
     user: { findUnique: jest.fn() },
     lessonRequest: {
@@ -16,7 +16,7 @@ describe('LessonService', () => {
       delete: jest.fn(),
     },
   };
-  const service = new LessonService(prisma as any);
+  const service = new LessonRequestService(prisma as any);
 
   const validDto = {
     region: 'SEOUL' as const,
@@ -115,22 +115,6 @@ describe('LessonService', () => {
         service.removeLessonRequest('uuid-1', 'req-1'),
       ).rejects.toThrow(ForbiddenException);
       expect(prisma.lessonRequest.delete).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('getMyOffers', () => {
-    it('목데이터 오퍼 목록을 반환한다', async () => {
-      const result = service.getMyLessonOffers();
-
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
-
-      const offer = result[0];
-      expect(offer).toHaveProperty('id');
-      expect(offer).toHaveProperty('coach');
-      expect(offer.coach).toHaveProperty('activityName');
-      expect(offer).toHaveProperty('message');
-      expect(offer.coach).toHaveProperty('career');
     });
   });
 });

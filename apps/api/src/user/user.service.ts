@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { PrismaService } from '../prisma/prisma.service';
-import { extractKakaoProfile } from './kakao-profile';
+import { extractKakaoProfile } from '../auth/kakao-profile';
 
 @Injectable()
-export class AuthService {
+export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
   async upsertUser(user: SupabaseUser) {

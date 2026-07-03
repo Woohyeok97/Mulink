@@ -1,10 +1,21 @@
 'use client';
 
-import { MessageSquare } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 import { REGION_LABEL, type LessonOffer } from '@/entities/lesson-request/lesson-request.type';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
 import { Button } from '@/shared/ui/button/button';
+
+function formatRelativeTime(isoString: string): string {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const diffMinutes = Math.floor(diffMs / (60 * 1000));
+  if (diffMinutes < 1) return '방금 전';
+  if (diffMinutes < 60) return `${diffMinutes}분 전`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}시간 전`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}일 전`;
+}
 
 type ProposalCardProps = {
   offer: LessonOffer;
@@ -16,29 +27,32 @@ export function ProposalCard({ offer, onViewProfile }: ProposalCardProps) {
   const initial = coach.activityName.charAt(0);
 
   return (
-    <div className="rounded-2xl border border-[var(--neutral-200)] bg-white p-5 shadow-[var(--shadow-sm)] transition-shadow duration-200 hover:shadow-[var(--shadow-lg)]">
-      <div className="flex items-center gap-3">
-        <Avatar size="default">
-          <AvatarFallback>{initial}</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold text-[var(--neutral-800)]">{coach.activityName}</span>
-          <span className="text-xs text-[var(--neutral-500)]">
-            {REGION_LABEL[coach.region]} · {coach.career}년 경력
-          </span>
+    <div className="rounded-2xl border border-(--neutral-200) bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-(--shadow-lg)">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Avatar size="default">
+            <AvatarFallback>{initial}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-bold text-(--neutral-900)">{coach.activityName}</span>
+            <span className="text-xs text-(--neutral-500)">
+              {REGION_LABEL[coach.region]} · {coach.career}년 경력
+            </span>
+          </div>
         </div>
+        <span className="flex shrink-0 items-center gap-1 text-xs text-(--neutral-400)">
+          <Clock className="size-3" />
+          {formatRelativeTime(offer.createdAt)}
+        </span>
       </div>
 
-      <div className="mt-4 flex items-start gap-2 rounded-lg bg-[var(--neutral-50)] p-3">
-        <MessageSquare className="mt-0.5 size-4 shrink-0 text-[var(--neutral-400)]" />
-        <p className="text-sm leading-relaxed text-[var(--neutral-700)]">{message}</p>
+      <div className="mt-4 rounded-[10px] bg-(--neutral-50) p-3.5">
+        <p className="text-sm leading-relaxed text-(--neutral-700)">{message}</p>
       </div>
 
-      <div className="mt-4 flex justify-end">
-        <Button variant="outline" size="sm" onClick={() => onViewProfile(offer)}>
-          프로필 보기
-        </Button>
-      </div>
+      <Button variant="outline" size="default" className="mt-4 w-full" onClick={() => onViewProfile(offer)}>
+        프로필 보기
+      </Button>
     </div>
   );
 }

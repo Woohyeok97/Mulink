@@ -3,9 +3,9 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { CoachService } from './coach.service';
+import { CoachProfileService } from './coach-profile.service';
 
-describe('CoachService', () => {
+describe('CoachProfileService', () => {
   // 트랜잭션 콜백 안에서 쓰는 목 (update + create)
   const prismaTransaction = {
     user: { update: jest.fn() },
@@ -16,7 +16,7 @@ describe('CoachService', () => {
     // $transaction(콜백) 형태: 콜백에 prismaTransaction 목을 넘겨 실행
     $transaction: jest.fn((callback: any) => callback(prismaTransaction)),
   };
-  const service = new CoachService(prisma as any);
+  const service = new CoachProfileService(prisma as any);
 
   const validDto = { activityName: '보컬코치홍', region: 'SEOUL' as const };
 
@@ -60,7 +60,7 @@ describe('CoachService', () => {
     await expect(
       service.registerCoach('uuid-1', {
         activityName: '홍',
-        region: 'BUSAN' as any,
+        region: 'JEJU' as any,
       }),
     ).rejects.toThrow(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();

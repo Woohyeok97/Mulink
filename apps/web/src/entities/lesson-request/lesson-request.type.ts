@@ -23,7 +23,7 @@ export type LessonRequest = {
   createdAt: string; // JSON 직렬화되면서 Date가 ISO 문자열로 전달됨
 };
 
-// 코치 제안 1건. 백엔드 GET /lesson-requests/me/offers 응답 배열의 원소와 1:1 대응.
+// 코치 제안 1건. lesson-proposal 기능 구현 시 백엔드 응답과 매핑 예정 (현재 UI에서만 사용).
 export type LessonOffer = {
   id: string;
   coach: {

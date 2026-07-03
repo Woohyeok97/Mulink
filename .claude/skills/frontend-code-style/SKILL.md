@@ -110,7 +110,68 @@ const { mutate, isPending, isError, error } = useCreateDesignMutation({
 
 ---
 
-<!-- 새 패턴은 여기 아래에 CS-5, CS-6, ... 형식으로 추가 -->
+### CS-5: props 타입은 `type`이 아니라 `interface`로
+
+**원칙**: 컴포넌트 props 타입을 정의할 때 `type` 대신 `interface`를 쓴다.
+
+```tsx
+interface ProposalCardProps {
+  proposal: Proposal;
+  onAccept: (proposalId: string) => void;
+}
+
+function ProposalCard({ proposal, onAccept }: ProposalCardProps) {
+  /* ... */
+}
+```
+
+**이유**: props는 컴포넌트의 공개 계약(contract)이라 `interface`가 의도에 맞고, 확장(`extends`)·선언 병합 시 유연함.
+
+---
+
+### CS-6: 이벤트 핸들러는 `const` 화살표 함수 + `handleXxx` 네이밍
+
+**원칙**: 핸들러를 `function` 선언 대신 `const` 화살표 함수로 만들고, 이름은 무엇을 하는지 정확히 드러나게 `handle<동작><대상>` 형식으로 짓는다.
+
+```tsx
+// 나쁨: 무슨 동작인지 모호하고 function 선언
+function onClick() { ... }
+
+// 좋음: 동작과 대상이 이름에 드러남
+const handleDeleteRequest = () => {
+  deleteLessonRequestAction(request.id);
+};
+
+const handleSubmitProposal = () => { ... };
+```
+
+**이유**: `handleDeleteRequest`처럼 정확한 이름이면 호출부만 봐도 무슨 일이 일어나는지 파악됨. `onClick` 같은 범용 이름은 여러 개 생기면 구분이 안 됨.
+
+---
+
+### CS-7: react-hook-form은 `Controller` 컴포넌트 대신 `useController` 훅
+
+**원칙**: 제어 컴포넌트를 폼에 연결할 때 `<Controller>` 래퍼 대신 `useController` 훅을 쓴다.
+
+```tsx
+// 나쁨: Controller 래퍼로 감싸면 render prop 중첩이 생김
+<Controller
+  control={control}
+  name="tier"
+  render={({ field }) => <TierSelect {...field} />}
+/>
+
+// 좋음: useController로 field를 꺼내 바로 연결
+const { field } = useController({ control, name: 'tier' });
+
+<TierSelect {...field} />;
+```
+
+**이유**: render prop 중첩 없이 JSX가 평평해지고, `field`를 변수로 다뤄 가공·재사용하기 쉬움.
+
+---
+
+<!-- 새 패턴은 여기 아래에 CS-8, CS-9, ... 형식으로 추가 -->
 
 ---
 

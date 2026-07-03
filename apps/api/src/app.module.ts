@@ -3,11 +3,18 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { CoachModule } from './coach/coach.module';
-import { LessonModule } from './lesson/lesson.module';
+import { UserModule } from './user/user.module';
+import { CoachProfileModule } from './coach-profile/coach-profile.module';
+import { LessonRequestModule } from './lesson-request/lesson-request.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, CoachModule, LessonModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    UserModule,
+    CoachProfileModule,
+    LessonRequestModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

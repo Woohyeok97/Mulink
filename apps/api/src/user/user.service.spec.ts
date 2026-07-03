@@ -1,9 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { UserService } from './user.service';
 
-describe('AuthService', () => {
+describe('UserService', () => {
   const prisma = { user: { upsert: jest.fn(), findUnique: jest.fn() } };
-  const service = new AuthService(prisma as any);
+  const service = new UserService(prisma as any);
   const supabaseUser: any = {
     id: 'uuid-1',
     user_metadata: { name: '홍길동' },

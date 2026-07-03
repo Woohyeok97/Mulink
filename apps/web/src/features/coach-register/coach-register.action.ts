@@ -15,7 +15,7 @@ export async function coachRegisterAction(data: CoachRegisterFormType): Promise<
     return { error: '로그인이 필요합니다.' };
   }
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/coaches`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/coach-profiles`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -9,7 +9,7 @@ import { Region } from '../../generated/prisma/enums';
 import type { RegisterCoachDto } from './dto/register-coach.dto';
 
 @Injectable()
-export class CoachService {
+export class CoachProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
   async registerCoach(userId: string, dto: RegisterCoachDto) {

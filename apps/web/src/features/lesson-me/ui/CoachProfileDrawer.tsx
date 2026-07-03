@@ -1,7 +1,6 @@
 'use client';
 
-import { MapPin, Users } from 'lucide-react';
-
+// components
 import { REGION_LABEL, type LessonOffer } from '@/entities/lesson-request/lesson-request.type';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
 import { Badge } from '@/shared/ui/badge/badge';
@@ -12,18 +11,25 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle,
+  DrawerTitle
 } from '@/shared/ui/drawer/drawer';
+// icons
+import { MapPin, Users, MessageCircle } from 'lucide-react';
 
-type CoachProfileDrawerProps = {
+interface CoachProfileDrawerProps {
   offer: LessonOffer | null;
   onClose: () => void;
   onAccept: (offer: LessonOffer) => void;
-};
+}
 
 export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDrawerProps) {
   return (
-    <Drawer direction="right" open={!!offer} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Drawer
+      direction="right"
+      open={!!offer}
+      onOpenChange={open => {
+        if (!open) onClose();
+      }}>
       <DrawerContent>
         {offer && (
           <>
@@ -33,9 +39,7 @@ export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDra
                   <AvatarFallback>{offer.coach.activityName.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-center">
-                  <DrawerTitle className="text-base font-semibold">
-                    {offer.coach.activityName}
-                  </DrawerTitle>
+                  <DrawerTitle className="text-base font-semibold">{offer.coach.activityName}</DrawerTitle>
                   <DrawerDescription className="sr-only">
                     코치 {offer.coach.activityName}의 프로필 상세
                   </DrawerDescription>
@@ -55,29 +59,25 @@ export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDra
 
             <div className="flex-1 overflow-y-auto px-6 py-4">
               <section className="mb-6">
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--neutral-400)]">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-(--neutral-400)">
                   코치의 한마디
                 </h3>
-                <div className="rounded-xl bg-[var(--neutral-50)] p-4">
-                  <p className="text-sm leading-relaxed text-[var(--neutral-700)]">{offer.message}</p>
+                <div className="rounded-xl bg-(--neutral-50) p-4">
+                  <p className="text-sm leading-relaxed text-(--neutral-700)">{offer.message}</p>
                 </div>
               </section>
 
               <section>
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--neutral-400)]">
-                  코치 정보
-                </h3>
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-(--neutral-400)">코치 정보</h3>
                 <table className="w-full text-sm">
-                  <tbody className="divide-y divide-[var(--neutral-100)]">
+                  <tbody className="divide-y divide-(--neutral-100)">
                     <tr>
-                      <td className="py-2.5 text-[var(--neutral-500)]">경력</td>
-                      <td className="py-2.5 text-right font-medium text-[var(--neutral-800)]">
-                        {offer.coach.career}년
-                      </td>
+                      <td className="py-2.5 text-(--neutral-500)">경력</td>
+                      <td className="py-2.5 text-right font-medium text-(--neutral-800)">{offer.coach.career}년</td>
                     </tr>
                     <tr>
-                      <td className="py-2.5 text-[var(--neutral-500)]">활동 지역</td>
-                      <td className="py-2.5 text-right font-medium text-[var(--neutral-800)]">
+                      <td className="py-2.5 text-(--neutral-500)">활동 지역</td>
+                      <td className="py-2.5 text-right font-medium text-(--neutral-800)">
                         {REGION_LABEL[offer.coach.region]}
                       </td>
                     </tr>
@@ -87,7 +87,12 @@ export function CoachProfileDrawer({ offer, onClose, onAccept }: CoachProfileDra
             </div>
 
             <DrawerFooter className="gap-2 p-6 pt-4">
-              <Button variant="outline" size="default" onClick={() => {}}>
+              <Button
+                variant="outline"
+                size="default"
+                className="bg-[#FEE500]"
+                leftIcon={<MessageCircle size={20} fill="rgba(0,0,0,0.85)" stroke="none" aria-hidden="true" />}
+                onClick={() => {}}>
                 카톡 1:1 상담
               </Button>
               <Button variant="emphasis" size="default" onClick={() => onAccept(offer)}>

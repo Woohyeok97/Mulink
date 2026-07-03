@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
-import { LessonRegisterForm } from '@/features/lesson-register/ui/LessonRegisterForm';
 import { getCurrentUser } from '@/entities/user/user.api';
 
-export default async function LessonRegisterPage() {
+export default async function StudentLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getCurrentUser();
 
   // 비로그인 상태인 경우
@@ -15,9 +14,5 @@ export default async function LessonRegisterPage() {
     return redirect('/');
   }
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <LessonRegisterForm />
-    </div>
-  );
+  return children;
 }

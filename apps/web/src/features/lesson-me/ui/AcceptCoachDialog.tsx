@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/shared/ui/dialog/dialog';
 
 type AcceptCoachDialogProps = {
@@ -19,7 +19,11 @@ type AcceptCoachDialogProps = {
 
 export function AcceptCoachDialog({ offer, onClose }: AcceptCoachDialogProps) {
   return (
-    <Dialog open={!!offer} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open={!!offer}
+      onOpenChange={open => {
+        if (!open) onClose();
+      }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>이 코치와 매칭할까요?</DialogTitle>
@@ -31,15 +35,13 @@ export function AcceptCoachDialog({ offer, onClose }: AcceptCoachDialogProps) {
         </DialogHeader>
 
         {offer && (
-          <div className="flex items-center gap-3 rounded-xl bg-[var(--neutral-50)] p-4">
+          <div className="flex items-center gap-3 rounded-xl bg-(--neutral-50) p-4">
             <Avatar size="default">
               <AvatarFallback>{offer.coach.activityName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold text-[var(--neutral-800)]">
-                {offer.coach.activityName}
-              </span>
-              <span className="text-xs text-[var(--neutral-500)]">
+              <span className="text-sm font-semibold text-(--neutral-800)">{offer.coach.activityName}</span>
+              <span className="text-xs text-(--neutral-500)">
                 {REGION_LABEL[offer.coach.region]} · {offer.coach.career}년 경력
               </span>
             </div>

@@ -64,7 +64,7 @@ export async function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
               {user.role === 'STUDENT' && (
-                <Link href="/coach/register" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                <Link href="/coach-register" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
                   코치 신청
                 </Link>
               )}
