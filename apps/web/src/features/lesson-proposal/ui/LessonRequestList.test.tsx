@@ -58,4 +58,32 @@ describe('LessonRequestList', () => {
     expect(createLessonProposalAction).toHaveBeenCalledWith('req-1', '함께 해요');
     expect(refresh).toHaveBeenCalled();
   });
+
+  it('전송이 실패하면 폼이 열린 채 유지되고 refresh를 호출하지 않는다', async () => {
+    vi.mocked(createLessonProposalAction).mockResolvedValue({ error: '이미 제안한 레슨 신청입니다.' });
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<LessonRequestList requests={[baseReq]} />);
+
+    await user.click(screen.getByRole('button', { name: /제안/ }));
+    await user.type(screen.getByPlaceholderText('학생에게 전할 한마디를 적어 주세요.'), '함께 해요');
+    await user.click(screen.getByRole('button', { name: '제안 전송' }));
+
+    expect(refresh).not.toHaveBeenCalled();
+    // 폼(textarea)이 그대로 열려 있다
+    expect(screen.getByPlaceholderText('학생에게 전할 한마디를 적어 주세요.')).toBeInTheDocument();
+  });
+
+  it('취소로 닫은 뒤 다시 열면 이전 입력이 남지 않는다', async () => {
+    const user = userEvent.setup();
+    render(<LessonRequestList requests={[baseReq]} />);
+
+    await user.click(screen.getByRole('button', { name: /제안/ }));
+    await user.type(screen.getByPlaceholderText('학생에게 전할 한마디를 적어 주세요.'), '임시 메모');
+    await user.click(screen.getByRole('button', { name: '취소' }));
+
+    // 다시 열면 textarea가 비어 있어야 한다
+    await user.click(screen.getByRole('button', { name: /제안/ }));
+    expect(screen.getByPlaceholderText('학생에게 전할 한마디를 적어 주세요.')).toHaveValue('');
+  });
 });

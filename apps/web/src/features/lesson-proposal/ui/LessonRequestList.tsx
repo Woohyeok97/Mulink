@@ -33,9 +33,19 @@ function LessonRequestRow({ request }: { request: OpenLessonRequest }) {
   });
   const { errors, isSubmitting } = formState;
 
+  // 제안 폼을 닫고 입력·검증 상태를 비운다 (다시 열 때 잔상이 남지 않도록)
+  const closeProposalForm = () => {
+    setIsFormOpen(false);
+    reset();
+  };
+
   // 제안 폼 열기/닫기 토글
   const toggleProposalForm = () => {
-    setIsFormOpen((open) => !open);
+    if (isFormOpen) {
+      closeProposalForm();
+      return;
+    }
+    setIsFormOpen(true);
     reset();
   };
 
@@ -46,8 +56,7 @@ function LessonRequestRow({ request }: { request: OpenLessonRequest }) {
       alert(result.error);
       return;
     }
-    setIsFormOpen(false);
-    reset();
+    closeProposalForm();
     router.refresh(); // 서버 목록 재검증 → isProposed 갱신
   });
 
@@ -113,7 +122,7 @@ function LessonRequestRow({ request }: { request: OpenLessonRequest }) {
             </p>
           )}
           <div className="mt-2.5 flex items-center justify-end gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setIsFormOpen(false)}>
+            <Button type="button" size="sm" variant="outline" onClick={closeProposalForm}>
               취소
             </Button>
             <Button type="submit" size="sm" loading={isSubmitting} leftIcon={<Send size={13} />}>
