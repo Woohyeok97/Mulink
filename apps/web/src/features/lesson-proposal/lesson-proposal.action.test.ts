@@ -43,7 +43,14 @@ describe('createLessonProposalAction', () => {
     expect(result).toBeUndefined();
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/lesson-requests/req-1/lesson-proposals'),
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ message: '안녕하세요' }),
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        }),
+      }),
     );
   });
 
