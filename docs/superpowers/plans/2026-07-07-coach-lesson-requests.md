@@ -154,7 +154,7 @@ export type OpenLessonRequest = {
 
 - [ ] **Step 2: 타입체크**
 
-Run: `pnpm turbo check-types --filter=@mulink/web`
+Run: `pnpm --filter=@mulink/web exec tsc --noEmit`
 Expected: PASS (새 타입만 추가, 아직 미사용이라 에러 없음).
 
 - [ ] **Step 3: 커밋**
@@ -204,7 +204,7 @@ export const getOpenLessonRequests = cache(async (): Promise<OpenLessonRequest[]
 
 - [ ] **Step 2: 타입체크**
 
-Run: `pnpm turbo check-types --filter=@mulink/web`
+Run: `pnpm --filter=@mulink/web exec tsc --noEmit`
 Expected: PASS.
 
 - [ ] **Step 3: 커밋**
@@ -813,7 +813,7 @@ export default async function CoachLessonRequestsPage() {
 
 - [ ] **Step 2: 타입체크**
 
-Run: `pnpm turbo check-types --filter=@mulink/web`
+Run: `pnpm --filter=@mulink/web exec tsc --noEmit`
 Expected: PASS.
 
 - [ ] **Step 3: 커밋**
@@ -829,7 +829,7 @@ git commit -m "feat(web): wire coach lesson-requests page to open list"
 
 - [ ] **Step 1: lint + 타입체크 전체**
 
-Run: `pnpm turbo lint check-types --filter=@mulink/web`
+Run: `pnpm --filter=@mulink/web lint && pnpm --filter=@mulink/web exec tsc --noEmit`
 Expected: PASS.
 
 - [ ] **Step 2: 백엔드 테스트 전체**
