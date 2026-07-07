@@ -3,10 +3,7 @@
 import { createClient } from '@/shared/lib/supabase/server';
 
 // 레슨 신청(requestId)에 제안 메시지를 보낸다. 성공하면 void, 실패하면 { error }.
-export async function createLessonProposalAction(
-  requestId: string,
-  message: string,
-): Promise<{ error: string } | void> {
+export async function createLessonProposalAction(requestId: string, message: string): Promise<{ error: string } | void> {
   const supabase = await createClient();
   // Bearer 토큰을 백엔드에 넘겨야 하는 구조상 getSession() 사용 (검증은 백엔드 Guard)
   const { data: sessionData } = await supabase.auth.getSession();

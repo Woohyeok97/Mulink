@@ -21,6 +21,7 @@ export type LessonRequest = {
   goal: string;
   genre: Genre;
   createdAt: string; // JSON 직렬화되면서 Date가 ISO 문자열로 전달됨
+  proposals: LessonProposal[];
 };
 
 // 코치가 보는 모집중 레슨 신청 한 건. 백엔드 GET /lesson-requests 응답과 1:1 대응.
@@ -35,17 +36,15 @@ export type OpenLessonRequest = {
   isProposed: boolean; // 현재 코치가 이미 제안했는지
 };
 
-// 코치 제안 1건. lesson-proposal 기능 구현 시 백엔드 응답과 매핑 예정 (현재 UI에서만 사용).
-export type LessonOffer = {
+// 코치 제안 1건. 백엔드 GET /lesson-requests/me 응답의 proposals 항목과 1:1 대응.
+export type LessonProposal = {
   id: string;
-  coach: {
-    id: string;
-    activityName: string;
-    region: Region;
-    career: number;
-  };
   message: string;
   createdAt: string;
+  coachProfile: {
+    activityName: string;
+    region: Region;
+  };
 };
 
 export const REGION_LABEL: Record<Region, string> = {

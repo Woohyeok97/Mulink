@@ -5,7 +5,7 @@ export default async function CoachLessonRequestsPage() {
   const requests = await getOpenLessonRequests();
 
   return (
-    <div className="mx-auto w-full max-w-260 px-8 py-8 pb-16">
+    <div className="mx-auto w-full max-w-260 px-4 pt-5 pb-15 sm:px-5 md:px-8 md:py-8 md:pb-16">
       {/* 페이지 헤딩 */}
       <div className="mb-7">
         <div className="mb-1.5 flex items-baseline gap-2.5">

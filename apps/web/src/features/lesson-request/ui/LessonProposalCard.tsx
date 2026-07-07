@@ -2,7 +2,7 @@
 
 import { Clock } from 'lucide-react';
 
-import { REGION_LABEL, type LessonOffer } from '@/entities/lesson-request/lesson-request.type';
+import { REGION_LABEL, type LessonProposal } from '@/entities/lesson-request/lesson-request.type';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
 import { Button } from '@/shared/ui/button/button';
 
@@ -18,13 +18,13 @@ function formatRelativeTime(isoString: string): string {
 }
 
 interface LessonProposalCardProps {
-  offer: LessonOffer;
-  onViewProfile: (offer: LessonOffer) => void;
+  offer: LessonProposal;
+  onViewProfile: (offer: LessonProposal) => void;
 }
 
 export function LessonProposalCard({ offer, onViewProfile }: LessonProposalCardProps) {
-  const { coach, message } = offer;
-  const initial = coach.activityName.charAt(0);
+  const { coachProfile, message } = offer;
+  const initial = coachProfile.activityName.charAt(0);
 
   return (
     <div className="rounded-2xl border border-(--neutral-200) bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-(--shadow-lg)">
@@ -34,10 +34,8 @@ export function LessonProposalCard({ offer, onViewProfile }: LessonProposalCardP
             <AvatarFallback>{initial}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-bold text-(--neutral-900)">{coach.activityName}</span>
-            <span className="text-xs text-(--neutral-500)">
-              {REGION_LABEL[coach.region]} · {coach.career}년 경력
-            </span>
+            <span className="text-sm font-bold text-(--neutral-900)">{coachProfile.activityName}</span>
+            <span className="text-xs text-(--neutral-500)">{REGION_LABEL[coachProfile.region]}</span>
           </div>
         </div>
         <span className="flex shrink-0 items-center gap-1 text-xs text-(--neutral-400)">

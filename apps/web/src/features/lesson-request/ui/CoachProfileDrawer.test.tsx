@@ -2,17 +2,15 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { CoachProfileDrawer } from './CoachProfileDrawer';
-import type { LessonOffer } from '@/entities/lesson-request/lesson-request.type';
+import type { LessonProposal } from '@/entities/lesson-request/lesson-request.type';
 
-const offer: LessonOffer = {
+const offer: LessonProposal = {
   id: 'offer-1',
   message: '안녕하세요',
   createdAt: new Date().toISOString(),
-  coach: {
-    id: 'coach-1',
+  coachProfile: {
     activityName: '홍길동',
-    region: 'SEOUL',
-    career: 5
+    region: 'SEOUL'
   }
 };
 

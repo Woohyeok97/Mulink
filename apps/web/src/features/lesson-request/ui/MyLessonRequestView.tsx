@@ -10,18 +10,18 @@ import { LessonProposalCard } from './LessonProposalCard';
 // icons
 import { Clock, Users } from 'lucide-react';
 // types
-import { type LessonOffer, type LessonRequest } from '@/entities/lesson-request/lesson-request.type';
+import { type LessonProposal, type LessonRequest } from '@/entities/lesson-request/lesson-request.type';
 
 interface MyLessonRequestViewProps {
-  lesson: LessonRequest;
-  proposals: LessonOffer[];
+  lessonRequest: LessonRequest;
 }
 
-export function MyLessonRequestView({ lesson, proposals }: MyLessonRequestViewProps) {
-  const [selectedOffer, setSelectedOffer] = useState<LessonOffer | null>(null);
+export function MyLessonRequestView({ lessonRequest }: MyLessonRequestViewProps) {
+  const { proposals } = lessonRequest;
+  const [selectedOffer, setSelectedOffer] = useState<LessonProposal | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const handleViewProfile = (offer: LessonOffer) => {
+  const handleViewProfile = (offer: LessonProposal) => {
     setSelectedOffer(offer);
   };
 
@@ -39,7 +39,7 @@ export function MyLessonRequestView({ lesson, proposals }: MyLessonRequestViewPr
         {/* 좌측 사이드바 - 나의 레슨 정보 */}
         <aside className="flex w-full flex-col lg:sticky lg:top-21 lg:w-75 lg:min-w-70 lg:shrink-0">
           <h2 className="mb-4 flex h-8 items-center text-base font-bold text-(--neutral-800)">내 레슨 신청</h2>
-          <LessonRequestCard request={lesson} onDelete={() => setDeleteDialogOpen(true)} />
+          <LessonRequestCard request={lessonRequest} onDelete={() => setDeleteDialogOpen(true)} />
         </aside>
 
         {/* 우측 메인 - 코치 레슨 제안 */}

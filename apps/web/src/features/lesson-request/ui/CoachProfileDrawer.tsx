@@ -1,7 +1,7 @@
 'use client';
 
 // components
-import { REGION_LABEL, type LessonOffer } from '@/entities/lesson-request/lesson-request.type';
+import { REGION_LABEL, type LessonProposal } from '@/entities/lesson-request/lesson-request.type';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
 import { Badge } from '@/shared/ui/badge/badge';
 import { Button } from '@/shared/ui/button/button';
@@ -14,10 +14,10 @@ import {
   DrawerTitle
 } from '@/shared/ui/drawer/drawer';
 // icons
-import { MapPin, Users, MessageCircle } from 'lucide-react';
+import { MapPin, MessageCircle } from 'lucide-react';
 
 interface CoachProfileDrawerProps {
-  offer: LessonOffer | null;
+  offer: LessonProposal | null;
   onClose: () => void;
 }
 
@@ -35,22 +35,18 @@ export function CoachProfileDrawer({ offer, onClose }: CoachProfileDrawerProps) 
             <DrawerHeader className="p-6 pb-0">
               <div className="flex flex-col items-center gap-3 pb-4">
                 <Avatar size="lg">
-                  <AvatarFallback>{offer.coach.activityName.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{offer.coachProfile.activityName.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-center">
-                  <DrawerTitle className="text-base font-semibold">{offer.coach.activityName}</DrawerTitle>
+                  <DrawerTitle className="text-base font-semibold">{offer.coachProfile.activityName}</DrawerTitle>
                   <DrawerDescription className="sr-only">
-                    코치 {offer.coach.activityName}의 프로필 상세
+                    코치 {offer.coachProfile.activityName}의 프로필 상세
                   </DrawerDescription>
                 </div>
                 <div className="flex gap-2">
                   <Badge variant="brand" className="rounded-full">
                     <MapPin />
-                    {REGION_LABEL[offer.coach.region]}
-                  </Badge>
-                  <Badge variant="brand" className="rounded-full">
-                    <Users />
-                    {offer.coach.career}년 경력
+                    {REGION_LABEL[offer.coachProfile.region]}
                   </Badge>
                 </div>
               </div>
@@ -71,13 +67,9 @@ export function CoachProfileDrawer({ offer, onClose }: CoachProfileDrawerProps) 
                 <table className="w-full text-sm">
                   <tbody className="divide-y divide-(--neutral-100)">
                     <tr>
-                      <td className="py-2.5 text-(--neutral-500)">경력</td>
-                      <td className="py-2.5 text-right font-medium text-(--neutral-800)">{offer.coach.career}년</td>
-                    </tr>
-                    <tr>
                       <td className="py-2.5 text-(--neutral-500)">활동 지역</td>
                       <td className="py-2.5 text-right font-medium text-(--neutral-800)">
-                        {REGION_LABEL[offer.coach.region]}
+                        {REGION_LABEL[offer.coachProfile.region]}
                       </td>
                     </tr>
                   </tbody>
