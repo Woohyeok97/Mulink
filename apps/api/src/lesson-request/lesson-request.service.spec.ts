@@ -150,7 +150,7 @@ describe('LessonRequestService', () => {
       );
     });
 
-    it('코치가 호출하면 각 신청에 isProposed를 붙여 반환한다', async () => {
+    it('코치가 호출하면 각 신청에 isProposed와 studentNickname을 붙여 반환한다', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: 'coach-1',
         role: 'COACH',
@@ -162,6 +162,7 @@ describe('LessonRequestService', () => {
           goal: 'g1',
           genre: 'POP',
           createdAt: new Date(),
+          student: { nickname: '김민지' },
         },
         {
           id: 'req-2',
@@ -169,6 +170,7 @@ describe('LessonRequestService', () => {
           goal: 'g2',
           genre: 'ROCK',
           createdAt: new Date(),
+          student: { nickname: '이준호' },
         },
       ]);
       // 코치가 이미 req-1에 제안함
@@ -178,8 +180,18 @@ describe('LessonRequestService', () => {
 
       const result = await service.getOpenLessonRequests('coach-1');
 
+      // student 관계를 닉네임만 include하는지 확인
+      expect(prisma.lessonRequest.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: 'desc' },
+        include: { student: { select: { nickname: true } } },
+      });
+      // 평탄화 결과
+      expect(result[0].studentNickname).toBe('김민지');
       expect(result[0].isProposed).toBe(true);
+      expect(result[1].studentNickname).toBe('이준호');
       expect(result[1].isProposed).toBe(false);
+      // 내부 관계 키는 노출하지 않음
+      expect((result[0] as Record<string, unknown>).student).toBeUndefined();
     });
   });
 

@@ -83,9 +83,10 @@ export class LessonRequestService {
       throw new ForbiddenException('코치만 접근할 수 있습니다.');
     }
 
-    // 2단계: 모집중 신청 전체 조회 (최신순)
+    // 2단계: 모집중 신청 전체 조회 (최신순) — 학생 닉네임만 함께 조회
     const requests = await this.prisma.lessonRequest.findMany({
       orderBy: { createdAt: 'desc' },
+      include: { student: { select: { nickname: true } } },
     });
 
     // 3단계: 이 코치가 이미 제안한 신청 id 집합
@@ -96,9 +97,10 @@ export class LessonRequestService {
 
     const proposedIds = new Set(myProposals.map((p) => p.requestId));
 
-    // 4단계: 각 신청에 isProposed 플래그를 붙여 반환
-    return requests.map((request) => ({
+    // 4단계: 각 신청에 isProposed·studentNickname을 붙이고 내부 관계는 감춘다
+    return requests.map(({ student, ...request }) => ({
       ...request,
+      studentNickname: student.nickname,
       isProposed: proposedIds.has(request.id),
     }));
   }
