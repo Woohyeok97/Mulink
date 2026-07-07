@@ -33,6 +33,7 @@ src/
 - **shared/ui 우선** — 새 컴포넌트 작성 전 `src/shared/ui/`에 적합한 것 있는지 확인. 없으면 shadcn/ui 기준으로 추가할지 사용자에게 먼저 확인
 - **스타일링**: `style` 속성 대신 Tailwind 클래스 사용
 - **디자인 시스템 우선 사용** - 스타일 작업 시 `src/app/globals.css`에 정의된 MU:LINK 디자인 토큰(`--primary`, `--green-*`, `--radius-*`, `--shadow-*` 등)을 우선 사용한다.
+- **Tailwind canonical 문법**: CSS 변수는 `text-(--neutral-700)` shorthand로, 스케일 값은 `size-9.5`처럼 canonical 클래스로 쓴다. `text-[var(--neutral-700)]`·`size-[38px]` 같은 임의값 문법 대신.
 - **네이밍**: 역할이 즉시 파악되는 명확한 이름
 
 ### 파일 네이밍
