@@ -89,6 +89,14 @@ pnpm --filter=@mulink/api test:e2e       # e2e
 pnpm --filter=@mulink/api test -- app.controller   # 단일 파일
 ```
 
+프론트엔드 테스트 (Vitest + @testing-library/react, `apps/web`에서). 테스트 파일은 `*.test.ts` / `*.test.tsx`:
+
+```sh
+pnpm --filter=@mulink/web test           # 전체
+pnpm --filter=@mulink/web test:watch     # watch
+pnpm --filter=@mulink/web exec vitest run LessonRequestList   # 단일 파일(이름 매칭)
+```
+
 ## 백엔드 (apps/api)
 
 - NestJS 표준 구조(module / controller / service). 진입점 `src/main.ts`, 루트 모듈 `src/app.module.ts`.
