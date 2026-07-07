@@ -23,6 +23,18 @@ export type LessonRequest = {
   createdAt: string; // JSON 직렬화되면서 Date가 ISO 문자열로 전달됨
 };
 
+// 코치가 보는 모집중 레슨 신청 한 건. 백엔드 GET /lesson-requests 응답과 1:1 대응.
+// (내 신청 조회와 달리 studentId 대신 studentNickname과 isProposed가 붙는다)
+export type OpenLessonRequest = {
+  id: string;
+  studentNickname: string;
+  region: Region;
+  goal: string;
+  genre: Genre;
+  createdAt: string; // JSON 직렬화되면서 Date가 ISO 문자열로 전달됨
+  isProposed: boolean; // 현재 코치가 이미 제안했는지
+};
+
 // 코치 제안 1건. lesson-proposal 기능 구현 시 백엔드 응답과 매핑 예정 (현재 UI에서만 사용).
 export type LessonOffer = {
   id: string;
