@@ -100,7 +100,7 @@ export default async function Home() {
                 </p>
               </div>
               <div className="justify-self-end max-md:justify-self-start max-sm:w-full">
-                <Button asChild variant="emphasis" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                <Button variant="emphasis" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
                   {loggedIn ? (
                     <Link href="/student/lesson-request/new">레슨 신청하기</Link>
                   ) : (
