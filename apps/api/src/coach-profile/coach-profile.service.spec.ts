@@ -6,10 +6,11 @@ import {
 import { CoachProfileService } from './coach-profile.service';
 
 describe('CoachProfileService', () => {
-  // 트랜잭션 콜백 안에서 쓰는 목 (update + create)
+  // 트랜잭션 콜백 안에서 쓰는 목 (update + create + 레슨 신청 삭제)
   const prismaTransaction = {
     user: { update: jest.fn() },
     coachProfile: { create: jest.fn() },
+    lessonRequest: { deleteMany: jest.fn() },
   };
   const prisma = {
     user: { findUnique: jest.fn() },
@@ -40,6 +41,9 @@ describe('CoachProfileService', () => {
     });
     expect(prismaTransaction.coachProfile.create).toHaveBeenCalledWith({
       data: { userId: 'uuid-1', activityName: '보컬코치홍', region: 'SEOUL' },
+    });
+    expect(prismaTransaction.lessonRequest.deleteMany).toHaveBeenCalledWith({
+      where: { studentId: 'uuid-1' },
     });
     expect(result).toEqual({
       id: 'coach-1',

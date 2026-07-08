@@ -11,9 +11,9 @@ import { Button } from '@/shared/ui/button/button';
 import { Textarea } from '@/shared/ui/textarea/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select/select';
 // schemas
-import { LessonRegisterSchema, REGIONS, GENRES, type LessonRegisterFormType } from '../lesson-register.schema';
+import { LessonRegisterSchema, REGIONS, GENRES, type LessonRegisterFormType } from '../../lesson-register.schema';
 // actions
-import { lessonRegisterAction } from '../lesson-register.action';
+import { lessonRegisterAction } from '../../lesson-register.action';
 
 export function LessonRegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);

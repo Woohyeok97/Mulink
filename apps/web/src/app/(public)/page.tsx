@@ -46,7 +46,13 @@ export default async function Home() {
           </p>
           <div className="mt-7.5 flex w-full justify-center max-sm:flex-col max-sm:items-stretch">
             <Button variant="emphasis" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
-              <Link href={loggedIn ? '/student/lesson-request/new' : '/login'}>레슨 신청하기</Link>
+              {!loggedIn ? (
+                <Link href="/login">레슨 신청하기</Link>
+              ) : isCoach ? (
+                <Link href="/coach/lesson-requests">레슨 제안하기</Link>
+              ) : (
+                <Link href="/student/lesson-request/new">레슨 신청하기</Link>
+              )}
             </Button>
           </div>
         </div>

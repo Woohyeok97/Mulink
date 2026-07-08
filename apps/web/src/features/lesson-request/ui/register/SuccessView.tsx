@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Check, ArrowRight } from 'lucide-react';
-import { REGIONS, GENRES, type RegionValue, type GenreValue } from '../lesson-register.schema';
+import { REGIONS, GENRES, type RegionValue, type GenreValue } from '../../lesson-register.schema';
 
 type SuccessViewProps = {
   region: RegionValue;
@@ -32,7 +32,7 @@ export function SuccessView({ region, genre }: SuccessViewProps) {
       </div>
 
       <Link
-        href="#"
+        href="/student/lesson-request"
         className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-(--green-700) hover:text-(--green-800)">
         현황 보러가기
         <ArrowRight className="size-4" />

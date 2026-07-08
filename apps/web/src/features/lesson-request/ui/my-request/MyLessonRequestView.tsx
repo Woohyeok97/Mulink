@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 // components
 import { Badge } from '@/shared/ui/badge/badge';
 import { LessonRequestCard } from './LessonRequestCard';
@@ -11,6 +12,8 @@ import { LessonProposalCard } from './LessonProposalCard';
 import { Clock, Users } from 'lucide-react';
 // types
 import { type LessonProposal, type LessonRequest } from '@/entities/lesson-request/lesson-request.type';
+// actions
+import { deleteLessonRequestAction } from '../../lesson-request.action';
 
 interface MyLessonRequestViewProps {
   lessonRequest: LessonRequest;
@@ -18,19 +21,30 @@ interface MyLessonRequestViewProps {
 
 export function MyLessonRequestView({ lessonRequest }: MyLessonRequestViewProps) {
   const { proposals } = lessonRequest;
-  const [selectedOffer, setSelectedOffer] = useState<LessonProposal | null>(null);
+  const router = useRouter();
+  const [selectedProposal, setSelectedProposal] = useState<LessonProposal | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleViewProfile = (offer: LessonProposal) => {
-    setSelectedOffer(offer);
+    setSelectedProposal(offer);
   };
 
   const handleDrawerClose = () => {
-    setSelectedOffer(null);
+    setSelectedProposal(null);
   };
 
-  const handleDeleteConfirm = () => {
+  // 레슨 신청 취소 핸들러
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    const result = await deleteLessonRequestAction(lessonRequest.id);
+    if (result?.error) {
+      alert(result.error);
+      setIsDeleting(false);
+      return;
+    }
     setDeleteDialogOpen(false);
+    router.refresh();
   };
 
   return (
@@ -82,7 +96,7 @@ export function MyLessonRequestView({ lessonRequest }: MyLessonRequestViewProps)
                   </li>
                 ))}
               </ul>
-              <CoachProfileDrawer offer={selectedOffer} onClose={handleDrawerClose} />
+              <CoachProfileDrawer offer={selectedProposal} onClose={handleDrawerClose} />
             </>
           )}
         </main>
@@ -92,6 +106,7 @@ export function MyLessonRequestView({ lessonRequest }: MyLessonRequestViewProps)
         open={deleteDialogOpen}
         onConfirm={handleDeleteConfirm}
         onClose={() => setDeleteDialogOpen(false)}
+        isDeleting={isDeleting}
       />
     </div>
   );

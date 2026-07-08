@@ -33,11 +33,15 @@ export class CoachProfileService {
       throw new ConflictException('관리자 계정은 코치로 등록할 수 없습니다.');
     }
 
-    // 3단계: 유저의 role을 STUDENT-> COACH로 승격하고 CoachProfile 생성을 트랜잭션으로 묶음
+    // 3단계: 유저의 role을 STUDENT-> COACH로 승격하고 CoachProfile 생성, 기존 레슨 신청 삭제를 트랜잭션으로 묶음
     return this.prisma.$transaction(async (prismaTransaction) => {
       await prismaTransaction.user.update({
         where: { id: userId },
         data: { role: 'COACH' },
+      });
+      // 코치는 학생 기능을 쓸 수 없으므로 기존 레슨 신청(및 cascade로 딸린 제안)을 삭제
+      await prismaTransaction.lessonRequest.deleteMany({
+        where: { studentId: userId },
       });
       return prismaTransaction.coachProfile.create({
         data: {

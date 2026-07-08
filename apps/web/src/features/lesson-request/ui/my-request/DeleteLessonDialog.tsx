@@ -14,9 +14,10 @@ interface DeleteLessonDialogProps {
   open: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  isDeleting?: boolean;
 }
 
-export function DeleteLessonDialog({ open, onConfirm, onClose }: DeleteLessonDialogProps) {
+export function DeleteLessonDialog({ open, onConfirm, onClose, isDeleting }: DeleteLessonDialogProps) {
   return (
     <Dialog
       open={open}
@@ -32,11 +33,11 @@ export function DeleteLessonDialog({ open, onConfirm, onClose }: DeleteLessonDia
         </DialogHeader>
 
         <DialogFooter>
-          <Button variant="outline" size="default" onClick={onClose}>
+          <Button variant="outline" size="default" onClick={onClose} disabled={isDeleting}>
             취소
           </Button>
-          <Button variant="destructive" size="default" onClick={onConfirm}>
-            삭제하기
+          <Button variant="destructive" size="default" onClick={onConfirm} loading={isDeleting}>
+            신청 취소
           </Button>
         </DialogFooter>
       </DialogContent>

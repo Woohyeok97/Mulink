@@ -1,4 +1,4 @@
-import { LessonRegisterForm } from '@/features/lesson-register/ui/LessonRegisterForm';
+import { LessonRegisterForm } from '@/features/lesson-request/ui/register/LessonRegisterForm';
 
 export default function LessonRegisterPage() {
   return (
