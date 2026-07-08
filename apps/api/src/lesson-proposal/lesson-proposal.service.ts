@@ -55,4 +55,18 @@ export class LessonProposalService {
       throw err;
     }
   }
+
+  // 레슨 제안 취소 — 본인이 보낸 제안만 삭제 가능
+  async removeLessonProposal(userId: string, proposalId: string) {
+    const proposal = await this.prisma.lessonProposal.findUnique({
+      where: { id: proposalId },
+    });
+    if (!proposal) {
+      throw new NotFoundException('레슨 제안을 찾을 수 없습니다.');
+    }
+    if (proposal.coachId !== userId) {
+      throw new ForbiddenException('본인의 레슨 제안만 취소할 수 있습니다.');
+    }
+    return this.prisma.lessonProposal.delete({ where: { id: proposalId } });
+  }
 }

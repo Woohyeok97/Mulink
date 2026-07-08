@@ -66,7 +66,7 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 - **`studentId`는 unique** — 1인 1신청을 DB 제약으로 보장한다 (앱 레벨 체크만으로는 동시 요청에 뚫린다).
 - User(학생) 삭제 시 cascade.
 
-**LessonProposal (레슨 제안)** — 기획: 제안 보내기 / 보낸 제안 목록 페이지 *(신규 추가 필요)*
+**LessonProposal (레슨 제안)** — 기획: 레슨 신청 목록 페이지 (코치) *(신규 추가 필요)*
 - 코치가 특정 레슨 신청에 보낸 제안.
 - 주요 필드: `requestId`(FK → LessonRequest), `coachId`(FK → User), `message`(제안 한마디, 텍스트), `createdAt`
 - **`@@unique([requestId, coachId])`** — 1레슨 신청 1레슨 제안 규칙 (같은 코치가 같은 신청에 중복 제안 불가)
@@ -137,7 +137,7 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 | 메서드 | 경로 | 설명 |
 |:---|:---|:---|
 | POST | `/lesson-requests` | 신청 생성 (학생) |
-| GET | `/lesson-requests` | 모집중 신청 목록 (코치) |
+| GET | `/lesson-requests` | 모집중 신청 목록 + 내가 보낸 제안 조회 (코치) |
 | GET | `/lesson-requests/me` | 내 신청 + 받은 제안 조회 (학생) |
 | DELETE | `/lesson-requests/:id` | 신청 삭제 (제안 cascade) |
 
@@ -147,8 +147,7 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 | 메서드 | 경로 | 설명 |
 |:---|:---|:---|
 | POST | `/lesson-requests/:id/lesson-proposals` | 제안 생성 (1신청 1제안) |
-| GET | `/lesson-proposals/me` | 내가 보낸 제안 목록 (코치) |
-| DELETE | `/lesson-proposals/:id` | 제안 취소 |
+| DELETE | `/lesson-proposals/:id` | 제안 취소 *(미구현 — 신규 추가 필요)* |
 
 
 ### 규칙
@@ -171,6 +170,28 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
   }
   ```
 
+- `GET /lesson-requests`(코치 목록)도 **화면 지향 엔드포인트**다. 레슨 신청 목록 페이지(코치)가 둘러보기·제안 보내기·제안 취소를 한 화면에서 처리하므로, 각 신청 항목에 "내가 이미 보낸 제안"을 `myProposal`로 nested 반환한다(제안 없으면 `null`). 별도로 내가 보낸 제안만 모아 조회하는 화면·엔드포인트는 없다(`GET /lesson-proposals/me`는 만들지 않음 — 코치용 "보낸 제안 목록 페이지"가 사라졌기 때문).
+
+  응답 형태 예시:
+  ```jsonc
+  [
+    {
+      "id": "...", "region": "SEOUL", "goal": "...", "genre": "BALLAD", "createdAt": "...",
+      "studentNickname": "...",
+      "myProposal": null   // 아직 제안 안 보낸 신청 — 프론트는 제안 보내기 폼을 보여줌
+    },
+    {
+      "id": "...", "region": "BUSAN", "goal": "...", "genre": "ROCK", "createdAt": "...",
+      "studentNickname": "...",
+      "myProposal": { "id": "...", "message": "...", "createdAt": "..." }   // 이미 보낸 제안 — 프론트는 "제안 완료" 뱃지 + 펼치면 한마디·발송 시각·취소 버튼을 보여줌
+    }
+  ]
+  ```
+
+  > **구현 필요**: 현재 `lesson-request.service.ts`의 `getOpenLessonRequests`는 `isProposed`(boolean)만 내려준다. 위 응답 형태(`myProposal` nested 객체)로 바꿔야 한다 — 코치가 보낸 제안 id/message/createdAt까지 함께 조회하도록 수정.
+  >
+  > **구현 필요**: `DELETE /lesson-proposals/:id`(제안 취소)는 표에만 있고 실제 컨트롤러/서비스 코드가 없다. `lesson-proposal.controller.ts`/`lesson-proposal.service.ts`에 추가해야 한다. 본인이 보낸 제안인지 확인(coachId 대조) 후 삭제하는 방식으로, 기존 `lesson-request.service.ts`의 `removeLessonRequest`(본인 확인 후 삭제) 패턴을 따른다.
+
 ### 모듈 재구조화 (해야 할 일)
 
 현재 `auth` 폴더에 유저 리소스(`@Controller('users')`)가 섞여 있다. 이를 분리한다.
@@ -192,8 +213,7 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 | `/coach-register` | 학생→코치 | 독립 (그룹 없음) | 코치 가입 페이지 |
 | `/student/lesson-request` | 학생 | `(student)` | 내 레슨 신청 현황 + 받은 제안 |
 | `/student/lesson-request/new` | 학생 | `(student)` | 레슨 신청 작성 |
-| `/coach/lesson-requests` | 코치 | `(coach)` | 모집중 레슨 신청 목록 |
-| `/coach/lesson-proposals` | 코치 | `(coach)` | 내가 보낸 레슨 제안 목록 |
+| `/coach/lesson-requests` | 코치 | `(coach)` | 모집중 레슨 신청 목록 (제안 보내기/취소 포함) |
 
 ### 규칙
 

@@ -24,8 +24,16 @@ export type LessonRequest = {
   proposals: LessonProposal[];
 };
 
+// 코치가 자신이 보낸 제안 한 건. GET /lesson-requests 응답의 myProposal에 대응.
+// (학생이 보는 LessonProposal과 달리 coachProfile 없이 내 제안 최소 정보만)
+export type MyProposal = {
+  id: string;
+  message: string;
+  createdAt: string;
+};
+
 // 코치가 보는 모집중 레슨 신청 한 건. 백엔드 GET /lesson-requests 응답과 1:1 대응.
-// (내 신청 조회와 달리 studentId 대신 studentNickname과 isProposed가 붙는다)
+// (내 신청 조회와 달리 studentId 대신 studentNickname과 myProposal이 붙는다)
 export type OpenLessonRequest = {
   id: string;
   studentNickname: string;
@@ -33,7 +41,7 @@ export type OpenLessonRequest = {
   goal: string;
   genre: Genre;
   createdAt: string; // JSON 직렬화되면서 Date가 ISO 문자열로 전달됨
-  isProposed: boolean; // 현재 코치가 이미 제안했는지
+  myProposal: MyProposal | null; // 이미 보낸 제안(없으면 null)
 };
 
 // 코치 제안 1건. 백엔드 GET /lesson-requests/me 응답의 proposals 항목과 1:1 대응.

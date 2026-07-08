@@ -150,7 +150,7 @@ describe('LessonRequestService', () => {
       );
     });
 
-    it('코치가 호출하면 각 신청에 isProposed와 studentNickname을 붙여 반환한다', async () => {
+    it('코치가 호출하면 각 신청에 myProposal과 studentNickname을 붙여 반환한다', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: 'coach-1',
         role: 'COACH',
@@ -174,8 +174,14 @@ describe('LessonRequestService', () => {
         },
       ]);
       // 코치가 이미 req-1에 제안함
+      const proposalCreatedAt = new Date('2026-07-06T13:20:00.000Z');
       prisma.lessonProposal.findMany.mockResolvedValue([
-        { requestId: 'req-1' },
+        {
+          id: 'p-1',
+          requestId: 'req-1',
+          message: '안녕하세요',
+          createdAt: proposalCreatedAt,
+        },
       ]);
 
       const result = await service.getOpenLessonRequests('coach-1');
@@ -187,9 +193,13 @@ describe('LessonRequestService', () => {
       });
       // 평탄화 결과
       expect(result[0].studentNickname).toBe('김민지');
-      expect(result[0].isProposed).toBe(true);
+      expect(result[0].myProposal).toEqual({
+        id: 'p-1',
+        message: '안녕하세요',
+        createdAt: proposalCreatedAt,
+      });
       expect(result[1].studentNickname).toBe('이준호');
-      expect(result[1].isProposed).toBe(false);
+      expect(result[1].myProposal).toBeNull();
       // 내부 관계 키는 노출하지 않음
       expect((result[0] as Record<string, unknown>).student).toBeUndefined();
     });

@@ -1,4 +1,12 @@
-import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { LessonProposalService } from './lesson-proposal.service';
@@ -23,5 +31,18 @@ export class LessonProposalController {
       requestId,
       dto,
     );
+  }
+}
+
+// 제안 취소는 신청 하위가 아닌 제안 리소스(lesson-proposals/:id)라 별도 컨트롤러로 둔다
+@Controller('lesson-proposals')
+@UseGuards(SupabaseAuthGuard)
+export class LessonProposalCancelController {
+  constructor(private readonly lessonProposalService: LessonProposalService) {}
+
+  // 레슨 제안 취소 (본인 제안만)
+  @Delete(':id')
+  async removeProposal(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.lessonProposalService.removeLessonProposal(req.user.id, id);
   }
 }

@@ -75,7 +75,7 @@ export class LessonRequestService {
     };
   }
 
-  // 모집중 레슨 신청 목록 조회 (코치) — 각 신청에 내가 이미 제안했는지(isProposed) 표시
+  // 모집중 레슨 신청 목록 조회 (코치) — 각 신청에 내가 보낸 제안(myProposal)을 붙여 표시
   async getOpenLessonRequests(userId: string) {
     // 1단계: 코치 자격 확인 — 학생은 이 화면을 쓰지 않음
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -89,19 +89,21 @@ export class LessonRequestService {
       include: { student: { select: { nickname: true } } },
     });
 
-    // 3단계: 이 코치가 이미 제안한 신청 id 집합
+    // 3단계: 이 코치가 이미 보낸 제안을 신청별로 매핑 (펼침 상세·취소에 쓸 id/message/createdAt 포함)
     const myProposals = await this.prisma.lessonProposal.findMany({
       where: { coachId: userId },
-      select: { requestId: true },
+      select: { id: true, requestId: true, message: true, createdAt: true },
     });
 
-    const proposedIds = new Set(myProposals.map((p) => p.requestId));
+    const myProposalByRequestId = new Map(
+      myProposals.map(({ requestId, ...proposal }) => [requestId, proposal]),
+    );
 
-    // 4단계: 각 신청에 isProposed·studentNickname을 붙이고 내부 관계는 감춘다
+    // 4단계: 각 신청에 myProposal·studentNickname을 붙이고 내부 관계는 감춘다
     return requests.map(({ student, ...request }) => ({
       ...request,
       studentNickname: student.nickname,
-      isProposed: proposedIds.has(request.id),
+      myProposal: myProposalByRequestId.get(request.id) ?? null,
     }));
   }
 
