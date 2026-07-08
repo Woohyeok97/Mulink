@@ -31,9 +31,32 @@ enum VocalTier {
 
 // 코치 활동 지역
 enum Region {
+  // 수도권
   SEOUL    // 서울
   GYEONGGI // 경기
   INCHEON  // 인천
+
+  // 영남권
+  BUSAN    // 부산
+  DAEGU    // 대구
+  ULSAN    // 울산
+
+  // 호남권
+  GWANGJU  // 광주
+
+  // 충청권
+  DAEJEON  // 대전
+}
+
+// 선호 장르
+enum Genre {
+  POP
+  BALLAD
+  ROCK
+  RNB
+  JAZZ
+  HIPHOP
+  TROT
 }
 
 // 유저 테이블
@@ -43,25 +66,9 @@ model User {
   nickname       String                 
   role           Role           @default(STUDENT) // 권한
   createdAt      DateTime       @default(now()) // 계정 생성 일자
-  lessonRequests LessonRequest[] // 1:N 관계 필드 (가상 — DB에 컬럼 안 생김)
-  coachProfile   CoachProfile?  // 코치일 때만 존재 (가상 — DB 컬럼 안 생김)
-}
-
-// 레슨 신청 테이블
-model LessonRequest {
-  id           String     @id @default(cuid()) // PK (Primary Key)
-  studentId       String     @db.Uuid // FK (Foreign Key) — User.id(UUID)와 타입 일치
-  student         User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  region       String // 희망 레슨 지역
-  goal         String // 레슨 목표
-  genre        String // 선호 장르
-  voiceAudioUrl     String // 녹음 파일 url
-  studentName  String // 레슨생 이름
-  studentPhone String // 레슨생 전화번호
-  tier         VocalTier? // 보컬 평가 (평가 이전에는 null)
-  createdAt    DateTime   @default(now()) // 레슨 신청일자 (업로드 횟수 제한/복구 정렬에 사용)
-
-  @@index([studentId])
+  lessonRequests  LessonRequest[]  // 1:N 관계 필드 (가상 — DB에 컬럼 안 생김)
+  lessonProposals LessonProposal[] // 코치로서 보낸 제안들 (가상 — DB 컬럼 안 생김)
+  coachProfile    CoachProfile?    // 코치일 때만 존재 (가상 — DB 컬럼 안 생김)
 }
 
 // 코치 프로필 테이블 (User와 1:1, COACH일 때만 존재)
@@ -73,3 +80,32 @@ model CoachProfile {
   region       Region // 활동 지역
   createdAt    DateTime @default(now())
 }
+
+// 레슨 신청 테이블
+model LessonRequest {
+  id        String           @id @default(cuid()) // PK (Primary Key)
+  studentId String           @unique @db.Uuid // FK — User.id(UUID)와 타입 일치. unique로 1인 1신청을 DB에서 보장
+  student   User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  region    Region // 희망 레슨 지역
+  goal      String // 레슨 목표
+  genre     Genre // 선호 장르
+  createdAt DateTime         @default(now()) // 레슨 신청일자
+  proposals LessonProposal[] // 이 신청에 들어온 제안들 (가상 — DB 컬럼 안 생김)
+}
+
+// 레슨 제안 테이블 (코치가 특정 레슨 신청에 보낸 제안)
+model LessonProposal {
+  id        String        @id @default(cuid()) // PK
+  requestId String // FK — LessonRequest.id
+  request   LessonRequest @relation(fields: [requestId], references: [id], onDelete: Cascade) // 신청 삭제 시 제안도 함께 삭제
+  coachId   String        @db.Uuid // FK — User.id(UUID)와 타입 일치
+  coach     User          @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  message   String // 제안 한마디
+  createdAt DateTime      @default(now()) // 제안 보낸 시각 (최신순 정렬용)
+
+  @@unique([requestId, coachId]) // 1신청 1제안 — 같은 코치가 같은 신청에 중복 제안 불가
+  @@index([requestId])
+  @@index([coachId])
+}
+
+

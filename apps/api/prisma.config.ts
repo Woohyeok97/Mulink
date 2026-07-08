@@ -7,6 +7,10 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    // ⚠️ 개발 전용 시드 (제거 대상). docs/superpowers/plans/2026-07-03-dev-seed-and-dev-login.md
+    // generated Prisma client이 .js 확장자 import를 써서 ts-node로 못 돌린다.
+    // 앱과 동일하게 tsc로 컴파일(dist)한 뒤 node로 실행한다 (package.json db:seed).
+    seed: 'pnpm db:seed',
   },
   datasource: {
     url: process.env['DIRECT_URL'],
