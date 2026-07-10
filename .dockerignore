@@ -1,0 +1,11 @@
+**/node_modules
+apps/api/dist
+apps/api/generated
+apps/api/.env
+apps/api/.env.example
+apps/web
+packages/*/node_modules
+.git
+.turbo
+**/*.log
+**/coverage

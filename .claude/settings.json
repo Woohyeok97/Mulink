@@ -2,10 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
+      "Bash(cd:*)",
       "Bash(pnpm:*)",
       "Bash(npx:*)",
       "Bash(curl:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(docker:*)"
     ]
   }
 }
