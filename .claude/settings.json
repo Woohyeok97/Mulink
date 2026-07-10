@@ -6,7 +6,8 @@
       "Bash(pnpm:*)",
       "Bash(npx:*)",
       "Bash(curl:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(docker:*)"
     ]
   }
 }
