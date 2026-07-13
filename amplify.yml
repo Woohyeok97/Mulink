@@ -16,6 +16,9 @@ applications:
             - pnpm install --frozen-lockfile
         build:
           commands:
+            # 모노레포 SSR 함정: Amplify는 콘솔 환경변수를 next build에 자동으로 안 넘긴다.
+            # 콘솔의 NEXT_PUBLIC_* 값을 web이 읽는 .env.production으로 직접 써넣어 인라인되게 한다.
+            - env | grep -e NEXT_PUBLIC_ >> apps/web/.env.production
             # web 앱만 빌드(turbo 필터)
             - pnpm --filter=@mulink/web build
       artifacts:
