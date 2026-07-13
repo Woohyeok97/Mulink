@@ -1,0 +1,44 @@
+# CI: PR이 열리거나 갱신될 때 자동으로 검사(타입체크·테스트·린트)를 돌린다.
+# 통과 못 하면 PR에 빨간불 → 머지 전에 불량 코드를 차단한다.
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      # 1단계: 레포 코드 체크아웃
+      - uses: actions/checkout@v4
+
+      # 2단계: pnpm 설치 (버전은 package.json의 packageManager 필드를 따름)
+      - uses: pnpm/action-setup@v6
+
+      # 3단계: Node 설치 + pnpm 의존성 캐시
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # 4단계: 워크스페이스 전체 의존성 설치 (lockfile 고정)
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5단계: prisma client 생성 — api 테스트/타입체크가 generated/prisma를 import하므로 필수
+      - name: Generate Prisma client
+        run: pnpm --filter=@mulink/api exec prisma generate
+
+      # 6단계: Turborepo 캐시 복원 — 안 바뀐 앱의 검사는 스킵돼 CI가 빨라진다
+      - name: Restore turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      # 7단계: 검사 실행 (타입체크 + 테스트). 하나라도 실패하면 이 잡이 빨간불.
+      - name: Type-check & test
+        run: pnpm turbo run check-types test --cache-dir=.turbo
