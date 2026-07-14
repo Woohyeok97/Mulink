@@ -1,5 +1,4 @@
 interface WaveVisualizerProps {
-  heights: number[];
   className?: string;
 }
 

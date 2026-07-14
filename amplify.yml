@@ -1,0 +1,32 @@
+# AWS Amplify 빌드 설정 (pnpm + Turborepo 모노레포, Next.js 16 SSR)
+# 이 파일이 repo에 있으면 Amplify 콘솔 설정보다 우선 적용된다.
+version: 1
+applications:
+  # 모노레포에서 빌드할 앱: apps/web (프론트). appRoot는 AMPLIFY_MONOREPO_APP_ROOT와 값이 같아야 한다.
+  - appRoot: apps/web
+    frontend:
+      # buildPath '/': 설치·빌드를 모노레포 루트에서 실행(루트 pnpm-lock.yaml/워크스페이스 인식용)
+      buildPath: '/'
+      phases:
+        preBuild:
+          commands:
+            # Amplify 기본 컨테이너엔 pnpm이 없어 직접 설치
+            - npm install -g pnpm
+            # 루트에서 워크스페이스 전체 의존성 설치(.npmrc의 node-linker=hoisted 적용됨)
+            - pnpm install --frozen-lockfile
+        build:
+          commands:
+            # 모노레포 SSR 함정: Amplify는 콘솔 환경변수를 next build에 자동으로 안 넘긴다.
+            # 콘솔의 NEXT_PUBLIC_* 값을 web이 읽는 .env.production으로 직접 써넣어 인라인되게 한다.
+            - env | grep -e NEXT_PUBLIC_ >> apps/web/.env.production
+            # web 앱만 빌드(turbo 필터)
+            - pnpm --filter=@mulink/web build
+      artifacts:
+        # SSR 산출물 위치. Next.js는 .next에 결과가 생긴다.
+        baseDirectory: apps/web/.next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - apps/web/.next/cache/**/*
