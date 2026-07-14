@@ -72,7 +72,8 @@ export class KakaoAuthController {
 
     try {
       const sessionTokens = await this.admin.createSessionTokens(profile);
-      const sessionCode = this.sessionCode.createSessionCode(sessionTokens);
+      const sessionCode =
+        await this.sessionCode.createSessionCode(sessionTokens);
       res.redirect(`${WEB_ORIGIN}/auth/callback?code=${sessionCode}`);
     } catch {
       res.redirect(`${WEB_ORIGIN}/login?error=session`);

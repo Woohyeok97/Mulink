@@ -53,7 +53,7 @@ export class DevLoginController {
       kakaoId: user.kakaoId,
       nickname: user.nickname,
     });
-    const code = this.sessionCode.createSessionCode(sessionTokens);
+    const code = await this.sessionCode.createSessionCode(sessionTokens);
     res.redirect(`${WEB_ORIGIN}/auth/callback?code=${code}`);
   }
 }

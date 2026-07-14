@@ -9,6 +9,17 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    # 세션코드 단위 테스트가 진짜 Redis에 붙으므로 잡 실행 동안 redis를 띄운다 (localhost:6379)
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       # 1단계: 레포 코드 체크아웃
       - uses: actions/checkout@v4

@@ -8,8 +8,10 @@ export class SessionController {
 
   // 세션 코드를 소비해 세션 토큰을 돌려줌 (만료/위조/재사용이면 거부)
   @Post('exchange')
-  exchangeSessionCode(@Body() body: { code: string }): SessionTokens {
-    const sessionTokens = this.sessionCode.consumeSessionCode(body.code);
+  async exchangeSessionCode(
+    @Body() body: { code: string },
+  ): Promise<SessionTokens> {
+    const sessionTokens = await this.sessionCode.consumeSessionCode(body.code);
     if (!sessionTokens)
       throw new UnauthorizedException('유효하지 않은 sessionCode');
     return sessionTokens;

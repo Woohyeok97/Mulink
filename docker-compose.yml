@@ -13,14 +13,13 @@ services:
     # NODE_ENV는 여기서 고정하지 않는다.
     # 로컬은 실행 시 지정(예: NODE_ENV=development), EC2는 .env의 NODE_ENV=production이 먹는다.
     # 여기서 development로 박아두면 실서버에서도 dev-login이 열리는 사고가 난다.
-    # REDIS_URL: 4단계(세션코드 Redis 이전)에서 아래 redis 주석과 함께 활성화
-    # environment:
-    #   REDIS_URL: redis://redis:6379
-    # depends_on:
-    #   - redis
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
 
-  # redis: 현재 코드는 아직 사용 안 함. 4단계에서 주석 해제해 활성화한다.
-  # redis:
-  #   image: redis:7-alpine
-  #   ports:
-  #     - "6379:6379"
+  # 세션코드 저장소 (BE-1: 프로세스 메모리 Map에서 이전)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
