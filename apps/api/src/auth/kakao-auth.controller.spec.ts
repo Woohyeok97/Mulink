@@ -35,7 +35,9 @@ describe('KakaoAuthController', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('authorize: state 쿠키를 굽고 buildAuthorizeUrl 결과로 redirect한다', () => {
-    (kakao.buildAuthorizeUrl as jest.Mock).mockReturnValue('https://kauth.kakao.com/authorize');
+    (kakao.buildAuthorizeUrl as jest.Mock).mockReturnValue(
+      'https://kauth.kakao.com/authorize',
+    );
     const res = makeRes();
 
     controller.authorize(res);
@@ -45,7 +47,9 @@ describe('KakaoAuthController', () => {
       expect.any(String),
       expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
     );
-    expect(res.redirect).toHaveBeenCalledWith('https://kauth.kakao.com/authorize');
+    expect(res.redirect).toHaveBeenCalledWith(
+      'https://kauth.kakao.com/authorize',
+    );
   });
 
   it('callback: state 불일치면 /login?error=state로 redirect한다', async () => {
@@ -54,7 +58,9 @@ describe('KakaoAuthController', () => {
 
     await controller.callback('code-1', 'query-state', req, res);
 
-    expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/login?error=state'));
+    expect(res.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('/login?error=state'),
+    );
     expect(admin.createSessionTokens).not.toHaveBeenCalled();
   });
 
@@ -64,24 +70,32 @@ describe('KakaoAuthController', () => {
 
     await controller.callback('code-1', undefined, req, res);
 
-    expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/login?error=state'));
+    expect(res.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('/login?error=state'),
+    );
     expect(admin.createSessionTokens).not.toHaveBeenCalled();
   });
 
   it('callback: state 일치면 세션 발급 후 /auth/callback?code=...로 redirect한다', async () => {
     (kakao.exchangeCodeForToken as jest.Mock).mockResolvedValue('kakao-token');
-    (kakao.getKakaoProfile as jest.Mock).mockResolvedValue({ kakaoId: '1', nickname: '홍길동' });
+    (kakao.getKakaoProfile as jest.Mock).mockResolvedValue({
+      kakaoId: '1',
+      nickname: '홍길동',
+    });
     (admin.createSessionTokens as jest.Mock).mockResolvedValue({
       accessToken: 'at',
       refreshToken: 'rt',
     });
-    (sessionCode.createSessionCode as jest.Mock).mockReturnValue('code-1');
+    (sessionCode.createSessionCode as jest.Mock).mockResolvedValue('code-1');
     const req = makeReq({ kakao_oauth_state: 'same-state' });
     const res = makeRes();
 
     await controller.callback('code-1', 'same-state', req, res);
 
-    expect(admin.createSessionTokens).toHaveBeenCalledWith({ kakaoId: '1', nickname: '홍길동' });
+    expect(admin.createSessionTokens).toHaveBeenCalledWith({
+      kakaoId: '1',
+      nickname: '홍길동',
+    });
     expect(res.clearCookie).toHaveBeenCalledWith(
       'kakao_oauth_state',
       expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
@@ -101,18 +115,23 @@ describe('SessionController', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('exchangeSessionCode: 코드가 유효하면 토큰을 반환한다', () => {
-    (sessionCode.consumeSessionCode as jest.Mock).mockReturnValue({ accessToken: 'at', refreshToken: 'rt' });
+  it('exchangeSessionCode: 코드가 유효하면 토큰을 반환한다', async () => {
+    (sessionCode.consumeSessionCode as jest.Mock).mockResolvedValue({
+      accessToken: 'at',
+      refreshToken: 'rt',
+    });
 
-    const result = controller.exchangeSessionCode({ code: 'code-1' });
+    const result = await controller.exchangeSessionCode({ code: 'code-1' });
 
     expect(sessionCode.consumeSessionCode).toHaveBeenCalledWith('code-1');
     expect(result).toEqual({ accessToken: 'at', refreshToken: 'rt' });
   });
 
-  it('exchangeSessionCode: consume이 null이면 UnauthorizedException을 던진다', () => {
-    (sessionCode.consumeSessionCode as jest.Mock).mockReturnValue(null);
+  it('exchangeSessionCode: consume이 null이면 UnauthorizedException을 던진다', async () => {
+    (sessionCode.consumeSessionCode as jest.Mock).mockResolvedValue(null);
 
-    expect(() => controller.exchangeSessionCode({ code: 'bad' })).toThrow(UnauthorizedException);
+    await expect(
+      controller.exchangeSessionCode({ code: 'bad' }),
+    ).rejects.toThrow(UnauthorizedException);
   });
 });

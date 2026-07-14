@@ -1,0 +1,47 @@
+# BE-1 세션코드 유실 장애 재현 환경.
+# 구성: nginx(로드밸런서) 1대 + api 2대(같은 이미지, INSTANCE_ID만 다름) + redis 1대.
+# 목적: "발급 서버 ≠ 교환 서버"를 만들어 Map 저장소의 서버 간 미공유 결함을 재현·측정한다.
+# 실행: docker compose -f docker-compose.repro.yml up --build
+services:
+  # 로드밸런서: 8080으로 들어온 요청을 api1/api2에 round-robin 분배
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./apps/api/scripts/nginx.repro.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api1
+      - api2
+
+  # api 1번 서버
+  api1:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - apps/api/.env
+    environment:
+      NODE_ENV: development # 재현 엔드포인트(/auth/repro/*)를 여는 조건
+      INSTANCE_ID: api1 # 응답에 실어 어느 서버가 처리했는지 식별
+      REDIS_URL: redis://redis:6379 # 단계 3(Redis 이전) 후부터 코드가 사용
+    depends_on:
+      - redis
+
+  # api 2번 서버 (api1과 동일 이미지, 표식만 다름)
+  api2:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - apps/api/.env
+    environment:
+      NODE_ENV: development
+      INSTANCE_ID: api2
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+
+  # 공용 저장소: 단계 5 After 측정에서 두 api가 공유
+  redis:
+    image: redis:7-alpine
