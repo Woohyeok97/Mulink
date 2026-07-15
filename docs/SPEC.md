@@ -14,6 +14,7 @@
 - NestJS 11
 - Prisma 7 (`@prisma/adapter-pg` + `pg` — Postgres 직접 연결). Client는 `apps/api/generated/prisma`로 생성.
 - Supabase JS 2 (인증)
+- AWS SDK v3 (`@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` — S3 presigned URL 발급)
 - cookie-parser, ws
 - 테스트: Jest
 
@@ -57,8 +58,9 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 
 **CoachProfile (코치 프로필)** — 기획: 코치 가입 페이지
 - User와 1:1. 코치로 전환한 유저만 가진다.
-- 주요 필드: `userId`(FK, unique), `activityName`(활동명, 텍스트), `region`(활동 지역, `Region` enum · 단일 값)
+- 주요 필드: `userId`(FK, unique), `activityName`(활동명, 텍스트), `region`(활동 지역, `Region` enum · 단일 값), `imageUrl`(프로필 이미지 S3 URL, **nullable** — 미등록 시 학생 화면에서 기본 아바타 표시)
 - User 삭제 시 cascade.
+- 이미지 파일 자체는 AWS S3에 두고, DB에는 그 공개 URL 문자열만 저장한다. 업로드 방식은 7장 참고.
 
 **LessonRequest (레슨 신청)** — 기획: 레슨 신청 작성 / 내 레슨 신청 현황 페이지
 - 학생이 올린 "레슨 받고 싶어요" 모집글.
@@ -127,9 +129,12 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 
 | 메서드 | 경로 | 설명 |
 |:---|:---|:---|
-| POST | `/coach-profiles` | 코치 가입(전환) — 활동명·지역 등록 |
+| POST | `/coach-profiles/upload-url` | 프로필 이미지 업로드용 S3 presigned URL 발급 |
+| POST | `/coach-profiles` | 코치 가입(전환) — 활동명·지역·(선택)이미지 URL 등록 |
 
-> `POST /coach-profiles`는 하나의 트랜잭션으로 처리한다: ① CoachProfile 생성 ② `User.role`을 COACH로 변경 ③ 그 유저의 기존 LessonRequest(및 cascade로 딸린 LessonProposal) 삭제. 코치 프로필 조회 전용 GET은 두지 않는다 — 코치 프로필은 `GET /lesson-requests/me` 응답에 nested로 포함된다.
+> `POST /coach-profiles/upload-url`은 클라이언트가 S3에 이미지를 직접 올리기 위한 presigned PUT URL을 발급한다. body로 파일 정보(contentType 등)를 받아 서버가 IAM 권한으로 서명한 임시 URL과, 업로드 후 접근할 공개 URL을 반환한다. 원본/변환본 파일은 서버를 거치지 않고 브라우저 → S3로 직접 전송된다(서버 대역폭·부하 절감). 상세 흐름은 7장 참고.
+>
+> `POST /coach-profiles`는 하나의 트랜잭션으로 처리한다: ① CoachProfile 생성(활동명·지역·`imageUrl`) ② `User.role`을 COACH로 변경 ③ 그 유저의 기존 LessonRequest(및 cascade로 딸린 LessonProposal) 삭제. `imageUrl`은 앞서 발급받은 presigned URL로 S3 업로드를 마친 뒤 얻은 공개 URL이며, 미등록 시 생략 가능(nullable). 코치 프로필 조회 전용 GET은 두지 않는다 — 코치 프로필은 `GET /lesson-requests/me` 응답에 nested로 포함된다.
 
 
 ### 레슨 신청 — `lesson-request` 모듈
@@ -164,7 +169,7 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
     "proposals": [                              // 최신순 정렬, 없으면 []
       {
         "id": "...", "message": "...", "createdAt": "...",
-        "coachProfile": { "activityName": "...", "region": "SEOUL" }   // CoachProfile nested
+        "coachProfile": { "activityName": "...", "region": "SEOUL", "imageUrl": "https://<버킷>.s3.<리전>.amazonaws.com/..." }   // CoachProfile nested, imageUrl은 미등록 시 null
       }
     ]
   }
@@ -238,6 +243,44 @@ SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY      # admin — 세션 발급용 (DB 전체 권한, 서버 전용)
 SUPABASE_PUBLISHABLE_KEY       # JWT 위임 검증용
 
+# AWS S3 (코치 프로필 이미지 저장 — presigned URL 발급용)
+AWS_REGION                     # 예: ap-northeast-2
+AWS_ACCESS_KEY_ID              # IAM 사용자 액세스 키 (S3 PutObject 권한)
+AWS_SECRET_ACCESS_KEY          # IAM 사용자 시크릿 키
+S3_BUCKET                      # 프로필 이미지 버킷명 (퍼블릭 읽기)
+
 # 기타
 WEB_ORIGIN                     # 로그인 후 web 리다이렉트 주소
 ```
+
+---
+
+## 7. 코치 프로필 이미지 업로드
+
+코치 가입 시 프로필 이미지를 등록할 수 있다(선택). 이미지는 **브라우저에서 AWS S3로 직접 업로드**하고, 서버에는 그 공개 URL만 저장한다. 원본 파일이 백엔드를 거치지 않으므로 서버 대역폭·처리 부하·스토리지를 아끼는 것이 이 설계의 목적이다.
+
+### 저장소
+
+- **AWS S3** 버킷 하나(프로필 이미지 전용, **퍼블릭 읽기**). 이미지 파일 자체는 S3, DB(`CoachProfile.imageUrl`)에는 공개 URL 문자열만 둔다.
+- 버킷 **CORS 설정 필수**: 브라우저가 presigned URL로 `PUT` 하려면 웹 오리진(로컬·Amplify 배포 도메인)에 대한 `PUT`/`GET` 허용이 있어야 한다.
+
+### 업로드 흐름 (클라이언트 직접 업로드 + presigned URL)
+
+| 단계 | 주체 | 동작 |
+|:---:|:---|:---|
+| 1 | web | 사용자가 이미지 파일 선택 → **브라우저에서 축소·변환**(긴 변 상한 리사이징 + WebP, 아래 참고) |
+| 2 | web → 서버 | `POST /coach-profiles/upload-url` — 변환본의 contentType 등을 보내 presigned PUT URL 요청 |
+| 3 | 서버 → web | IAM 권한으로 서명한 presigned PUT URL + 업로드 후 접근할 공개 URL 반환 |
+| 4 | web → S3 | presigned URL로 변환본을 **S3에 직접 `PUT`** (백엔드 미경유) |
+| 5 | web → 서버 | `POST /coach-profiles` — 활동명·지역과 함께 S3 공개 URL(`imageUrl`) 전송 → DB 저장 |
+
+- 이미지 미등록 시 2~4단계를 건너뛰고 `imageUrl` 없이 5단계만 수행한다.
+- 업로드 실패 시 코치 가입을 완료하지 않는다(PRODUCT 엣지케이스: 1차엔 이미지 수정 수단이 없어 업로드 성공을 가입 조건으로 둠).
+
+### 브라우저 이미지 축소 (1단계 상세)
+
+- **Canvas API**로 업로드 직전 원본을 축소한다: `drawImage`로 긴 변 기준 리사이징(비율 유지, 목록 표시와 상세 확대를 모두 커버하는 상한) → `toBlob('image/webp', quality)`로 WebP 변환.
+- **HEIC**(아이폰 기본 포맷)는 브라우저 Canvas가 못 읽으므로 변환 처리, **EXIF 회전** 정보 반영, **WebP 미지원 브라우저는 JPEG 폴백**.
+- 표시는 목록 아바타에서 `next/image`로 렌더한다(`next.config.ts`의 `images.remotePatterns`에 S3 도메인 등록 필요).
+
+> 축소를 서버(sharp)가 아니라 클라이언트에서 하는 이유: 서버 변환은 원본이 이미 업로드된 뒤라 업로드 대역폭·서버 수신 부하·원본 스토리지를 줄이지 못한다. 브라우저에서 미리 줄이면 축소본만 네트워크를 타므로 이 비용들이 함께 줄어든다.
