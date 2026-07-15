@@ -47,6 +47,7 @@ export class CoachProfileService {
         data: {
           userId,
           activityName: dto.activityName.trim(),
+          imageUrl: dto.imageUrl ?? null,
           region: dto.region,
         },
       });

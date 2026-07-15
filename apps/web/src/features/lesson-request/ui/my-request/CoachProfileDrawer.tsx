@@ -2,7 +2,7 @@
 
 // components
 import { REGION_LABEL, type LessonProposal } from '@/entities/lesson-request/lesson-request.type';
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar/avatar';
 import { Badge } from '@/shared/ui/badge/badge';
 import { Button } from '@/shared/ui/button/button';
 import {
@@ -35,6 +35,7 @@ export function CoachProfileDrawer({ offer, onClose }: CoachProfileDrawerProps) 
             <DrawerHeader className="p-6 pb-0">
               <div className="flex flex-col items-center gap-3 pb-4">
                 <Avatar size="lg">
+                  <AvatarImage src={offer.coachProfile.imageUrl ?? undefined} alt={offer.coachProfile.activityName} />
                   <AvatarFallback>{offer.coachProfile.activityName.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-center">

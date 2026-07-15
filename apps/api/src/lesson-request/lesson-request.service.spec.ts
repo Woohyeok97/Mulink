@@ -95,7 +95,7 @@ describe('LessonRequestService', () => {
             message: '안녕',
             createdAt: proposalCreatedAt,
             coach: {
-              coachProfile: { activityName: '김보컬', region: 'SEOUL' },
+              coachProfile: { activityName: '김보컬', imageUrl: null, region: 'SEOUL' },
             },
           },
         ],
@@ -116,7 +116,7 @@ describe('LessonRequestService', () => {
               coach: {
                 select: {
                   coachProfile: {
-                    select: { activityName: true, region: true },
+                    select: { activityName: true, imageUrl: true, region: true },
                   },
                 },
               },
@@ -129,7 +129,7 @@ describe('LessonRequestService', () => {
         id: 'p-1',
         message: '안녕',
         createdAt: proposalCreatedAt,
-        coachProfile: { activityName: '김보컬', region: 'SEOUL' },
+        coachProfile: { activityName: '김보컬', imageUrl: null, region: 'SEOUL' },
       });
     });
 

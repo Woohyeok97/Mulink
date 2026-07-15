@@ -54,7 +54,9 @@ export class LessonRequestService {
             createdAt: true,
             coach: {
               select: {
-                coachProfile: { select: { activityName: true, region: true } },
+                coachProfile: {
+                  select: { activityName: true, imageUrl: true, region: true },
+                },
               },
             },
           },

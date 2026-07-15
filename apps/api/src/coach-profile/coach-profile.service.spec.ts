@@ -40,7 +40,7 @@ describe('CoachProfileService', () => {
       data: { role: 'COACH' },
     });
     expect(prismaTransaction.coachProfile.create).toHaveBeenCalledWith({
-      data: { userId: 'uuid-1', activityName: '보컬코치홍', region: 'SEOUL' },
+      data: { userId: 'uuid-1', activityName: '보컬코치홍', imageUrl: null, region: 'SEOUL' },
     });
     expect(prismaTransaction.lessonRequest.deleteMany).toHaveBeenCalledWith({
       where: { studentId: 'uuid-1' },
