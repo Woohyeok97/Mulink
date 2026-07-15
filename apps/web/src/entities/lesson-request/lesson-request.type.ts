@@ -51,6 +51,7 @@ export type LessonProposal = {
   createdAt: string;
   coachProfile: {
     activityName: string;
+    imageUrl: string | null;
     region: Region;
   };
 };

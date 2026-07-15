@@ -10,6 +10,7 @@ const offer: LessonProposal = {
   createdAt: new Date().toISOString(),
   coachProfile: {
     activityName: '홍길동',
+    imageUrl: null,
     region: 'SEOUL'
   }
 };

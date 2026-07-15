@@ -8,6 +8,7 @@ type Region = 'SEOUL' | 'GYEONGGI' | 'INCHEON';
 export type CoachProfile = {
   id: string;
   activityName: string;
+  imageUrl: string | null;
   region: Region;
 };
 
