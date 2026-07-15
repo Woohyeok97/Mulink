@@ -19,7 +19,7 @@ const emailOf = (kakaoId: string) => `${kakaoId}@kakao.local`;
 
 const COACH_COUNT = 12;
 const STUDENT_COUNT = 12;
-const PROPOSALS_PER_REQUEST = 6; // 각 학생 신청에 붙는 코치 수
+const PROPOSALS_PER_REQUEST = 12; // 각 학생 신청에 붙는 코치 수 (전원 제안 — 이미지 목록 LCP 측정용)
 
 const REGIONS = Object.values(Region);
 const GENRES = Object.values(Genre);
@@ -53,6 +53,25 @@ const STUDENT_NAMES = [
   '도윤',
   '은우',
 ];
+// 코치 프로필 이미지 (S3 seed_images/, 원본 대용량 — 전송량·LCP 측정용). COACH_NAMES 순서와 1:1 대응.
+// 6장은 이름 매칭, 나머지 6명은 pexels 이미지 배정. URL은 S3 퍼블릭 읽기 객체.
+// 한글 파일명은 macOS가 NFD(자모 분리)로 저장하므로, encodeURIComponent(NFC) 대신 실제 업로드된 URL을 그대로 사용.
+const S3_BASE = 'https://mulink-storage.s3.ap-northeast-2.amazonaws.com/seed_images';
+const COACH_IMAGE_URLS = [
+  `${S3_BASE}/%E1%84%80%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A5%E1%84%8B%E1%85%A7%E1%86%AB.jpg`, // 1 김서연
+  `${S3_BASE}/%E1%84%8B%E1%85%B5%E1%84%83%E1%85%A9%E1%84%92%E1%85%A7%E1%86%AB.jpg`, // 2 이도현
+  `${S3_BASE}/pexels-atahandemir-18178712.jpg`, // 3 박지우
+  `${S3_BASE}/%E1%84%8E%E1%85%AC%E1%84%86%E1%85%B5%E1%86%AB%E1%84%8C%E1%85%AE%E1%86%AB.jpg`, // 4 최민준
+  `${S3_BASE}/%E1%84%8C%E1%85%A5%E1%86%BC%E1%84%92%E1%85%A1%E1%84%8B%E1%85%B3%E1%86%AB.jpg`, // 5 정하은
+  `${S3_BASE}/pexels-alecdoua-29622560.jpg`, // 6 강태윤
+  `${S3_BASE}/%E1%84%8C%E1%85%A9%E1%84%8B%E1%85%A8%E1%84%85%E1%85%B5%E1%86%AB.jpg`, // 7 조예린
+  `${S3_BASE}/pexels-peterdanthy-33179924.jpg`, // 8 윤시우
+  `${S3_BASE}/%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%AE%E1%84%8B%E1%85%A1.jpg`, // 9 임수아
+  `${S3_BASE}/pexels-hao-peng-2148478861-30120552.jpg`, // 10 한지호
+  `${S3_BASE}/pexels-nui-malama-169330637-36822745.jpg`, // 11 오다인
+  `${S3_BASE}/pexels-tbd-tuyen-859104985-31173514.jpg`, // 12 서준혁
+];
+
 // 코치 활동명 스타일 (이름과 조합)
 const STUDIO_SUFFIXES = [
   '보컬 스튜디오',
@@ -177,6 +196,7 @@ async function main() {
         coachProfile: {
           create: {
             activityName: `${nickname} ${STUDIO_SUFFIXES[i % STUDIO_SUFFIXES.length]}`,
+            imageUrl: COACH_IMAGE_URLS[i - 1],
             region: REGIONS[i % REGIONS.length],
           },
         },
