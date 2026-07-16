@@ -4,7 +4,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  type OnGatewayConnection,
+  type OnGatewayInit,
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import { SupabaseService } from '../auth/supabase.service';
@@ -17,7 +17,7 @@ import { ChatService } from './chat.service';
     credentials: true,
   },
 })
-export class ChatGateway implements OnGatewayConnection {
+export class ChatGateway implements OnGatewayInit {
   @WebSocketServer() server!: Server;
 
   constructor(
@@ -25,19 +25,25 @@ export class ChatGateway implements OnGatewayConnection {
     private readonly chatService: ChatService,
   ) {}
 
-  // 핸드셰이크에서 토큰 1회 검증 → socket.data.user에 심고, 실패 시 연결 끊음
-  async handleConnection(socket: Socket) {
-    const token = socket.handshake.auth?.token as string | undefined;
-    if (!token) {
-      socket.disconnect();
-      return;
-    }
-    const { data, error } = await this.supabase.getUser(token);
-    if (error || !data?.user) {
-      socket.disconnect();
-      return;
-    }
-    socket.data.user = data.user;
+  // 핸드셰이크 미들웨어로 토큰 1회 검증 → socket.data.user에 심음.
+  // handleConnection(async)은 connect 완료를 못 막아, 검증 전에 도착한 chat:join이
+  // socket.data.user 없이 실행되는 레이스가 있었다. 미들웨어는 next() 호출 전까지
+  // connect 이벤트 자체가 발생하지 않아 이 레이스를 원천 차단한다(소켓 인증 정석).
+  afterInit(server: Server) {
+    server.use(async (socket, next) => {
+      const token = socket.handshake.auth?.token as string | undefined;
+      if (!token) {
+        next(new Error('인증 토큰이 없습니다.'));
+        return;
+      }
+      const { data, error } = await this.supabase.getUser(token);
+      if (error || !data?.user) {
+        next(new Error('유효하지 않은 토큰입니다.'));
+        return;
+      }
+      socket.data.user = data.user;
+      next();
+    });
   }
 
   private userId(socket: Socket): string {
