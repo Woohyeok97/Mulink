@@ -9,8 +9,16 @@ import type { ChatMessage } from '@/entities/chat/chat.type';
 type Props = { roomId: string; myId: string; initialMessages: ChatMessage[] };
 
 export function ChatRoomView({ roomId, myId, initialMessages }: Props) {
-  const { connected, messages, read, connect, joinRoom, sendMessage, markRead } =
-    useChatSocket();
+  const {
+    connected,
+    messages,
+    read,
+    pending,
+    connect,
+    joinRoom,
+    sendMessage,
+    markRead,
+  } = useChatSocket();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -65,6 +73,15 @@ export function ChatRoomView({ roomId, myId, initialMessages }: Props) {
             />
           ))
         )}
+        {/* 아직 서버 ack를 못 받은 미전송 메시지 — 흐리게 '전송 중' 표시 */}
+        {pending.map((p) => (
+          <div key={p.clientMsgId} className="flex justify-end opacity-50">
+            <div className="max-w-[70%] rounded-lg bg-(--neutral-100) px-3 py-2">
+              <p className="text-sm text-(--neutral-800)">{p.content}</p>
+              <span className="text-xs text-(--neutral-400)">전송 중…</span>
+            </div>
+          </div>
+        ))}
         <div ref={bottomRef} />
       </div>
       <div className="flex gap-2 border-t border-(--neutral-100) p-3">
