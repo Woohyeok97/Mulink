@@ -94,4 +94,61 @@ export class ChatService {
     });
     return { roomId, lastReadMessageId, readerId: userId };
   }
+
+  // 내 채팅방 목록 — 각 방에 상대 표시정보·마지막 메시지·안읽음 수 (화면 지향)
+  async getMyRooms(userId: string) {
+    const rooms = await this.prisma.chatRoom.findMany({
+      where: { OR: [{ studentId: userId }, { coachId: userId }] },
+      include: {
+        coach: {
+          select: {
+            nickname: true,
+            coachProfile: { select: { activityName: true, imageUrl: true } },
+          },
+        },
+        student: { select: { nickname: true } },
+        messages: { orderBy: { id: 'desc' }, take: 1 }, // 마지막 메시지 1건
+      },
+    });
+
+    // 방마다 안읽음 수를 병렬 집계 후 응답 형태로 평탄화
+    const withMeta = await Promise.all(
+      rooms.map(async (room) => {
+        const iAmStudent = room.studentId === userId;
+        const myLastRead = iAmStudent
+          ? room.studentLastReadMessageId
+          : room.coachLastReadMessageId;
+        const unreadCount = await this.prisma.chatMessage.count({
+          where: {
+            roomId: room.id,
+            id: { gt: myLastRead ?? 0 },
+            senderId: { not: userId },
+          },
+        });
+        const last = room.messages[0] ?? null;
+        return {
+          id: room.id,
+          partner: iAmStudent
+            ? {
+                name:
+                  room.coach.coachProfile?.activityName ?? room.coach.nickname,
+                imageUrl: room.coach.coachProfile?.imageUrl ?? null,
+              }
+            : { name: room.student.nickname, imageUrl: null },
+          lastMessage: last
+            ? { content: last.content, createdAt: last.createdAt }
+            : null,
+          unreadCount,
+          createdAt: room.createdAt,
+        };
+      }),
+    );
+
+    // 최근 대화순 — 마지막 메시지 시각 우선, 없으면 방 생성 시각
+    return withMeta.sort((a, b) => {
+      const at = a.lastMessage?.createdAt ?? a.createdAt;
+      const bt = b.lastMessage?.createdAt ?? b.createdAt;
+      return new Date(bt).getTime() - new Date(at).getTime();
+    });
+  }
 }

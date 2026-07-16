@@ -7,15 +7,25 @@ describe('ChatService', () => {
   let service: ChatService;
   let prisma: {
     lessonProposal: { findUnique: jest.Mock };
-    chatRoom: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
-    chatMessage: { create: jest.Mock; findMany: jest.Mock };
+    chatRoom: {
+      findUnique: jest.Mock;
+      create: jest.Mock;
+      update: jest.Mock;
+      findMany: jest.Mock;
+    };
+    chatMessage: { create: jest.Mock; findMany: jest.Mock; count: jest.Mock };
   };
 
   beforeEach(async () => {
     prisma = {
       lessonProposal: { findUnique: jest.fn() },
-      chatRoom: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
-      chatMessage: { create: jest.fn(), findMany: jest.fn() },
+      chatRoom: {
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        findMany: jest.fn(),
+      },
+      chatMessage: { create: jest.fn(), findMany: jest.fn(), count: jest.fn() },
     };
     const moduleRef = await Test.createTestingModule({
       providers: [ChatService, { provide: PrismaService, useValue: prisma }],
@@ -83,5 +93,37 @@ describe('ChatService', () => {
       data: { roomId: 'room1', senderId: 'me', content: '안녕' },
     });
     expect(msg.senderId).toBe('me');
+  });
+
+  // 목록의 각 방에 상대·마지막 메시지·안읽음 수를 붙인다
+  it('getMyRooms는 방마다 partner·lastMessage·unreadCount를 붙인다', async () => {
+    prisma.chatRoom.findMany.mockResolvedValue([
+      {
+        id: 'room1',
+        studentId: 'me',
+        coachId: 'coach1',
+        studentLastReadMessageId: 5,
+        coachLastReadMessageId: null,
+        createdAt: new Date(),
+        coach: {
+          nickname: '코치닉',
+          coachProfile: { activityName: '코치A', imageUrl: null },
+        },
+        student: { nickname: '학생닉' },
+        messages: [
+          { id: 8, content: '마지막', createdAt: new Date(), senderId: 'coach1' },
+        ],
+      },
+    ]);
+    prisma.chatMessage.count.mockResolvedValue(3);
+
+    const rooms = await service.getMyRooms('me');
+    expect(rooms[0].partner.name).toBe('코치A'); // 내가 학생이면 상대는 코치
+    expect(rooms[0].lastMessage?.content).toBe('마지막');
+    expect(rooms[0].unreadCount).toBe(3);
+    // 안읽음 집계: id > 내 lastRead(5) AND senderId != 나(me)
+    expect(prisma.chatMessage.count).toHaveBeenCalledWith({
+      where: { roomId: 'room1', id: { gt: 5 }, senderId: { not: 'me' } },
+    });
   });
 });
