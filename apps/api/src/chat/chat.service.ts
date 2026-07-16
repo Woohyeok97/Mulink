@@ -54,4 +54,44 @@ export class ChatService {
     }
     return room;
   }
+
+  // 방 초기 내역 — 전체를 id 오름차순으로 (MVP: 페이지네이션 없음)
+  async getMessages(userId: string, roomId: string) {
+    await this.getRoomForParticipant(userId, roomId);
+    return this.prisma.chatMessage.findMany({
+      where: { roomId },
+      orderBy: { id: 'asc' },
+    });
+  }
+
+  // 재동기화 — 이 id 초과 메시지만 (끊긴 사이 쌓인 것). id가 단조증가라 WHERE id > ?
+  async getMessagesAfter(userId: string, roomId: string, afterId: number) {
+    await this.getRoomForParticipant(userId, roomId);
+    return this.prisma.chatMessage.findMany({
+      where: { roomId, id: { gt: afterId } },
+      orderBy: { id: 'asc' },
+    });
+  }
+
+  // 메시지 저장 (소켓 chat:send에서 호출) — 저장이 브로드캐스트보다 먼저 와야 유실 방지
+  async saveMessage(userId: string, roomId: string, content: string) {
+    await this.getRoomForParticipant(userId, roomId);
+    return this.prisma.chatMessage.create({
+      data: { roomId, senderId: userId, content },
+    });
+  }
+
+  // 읽음 커서 갱신 — 뷰어 역할(student/coach)에 맞는 컬럼을 올린다
+  async markRead(userId: string, roomId: string, lastReadMessageId: number) {
+    const room = await this.getRoomForParticipant(userId, roomId);
+    const field =
+      room.studentId === userId
+        ? 'studentLastReadMessageId'
+        : 'coachLastReadMessageId';
+    await this.prisma.chatRoom.update({
+      where: { id: roomId },
+      data: { [field]: lastReadMessageId },
+    });
+    return { roomId, lastReadMessageId, readerId: userId };
+  }
 }
