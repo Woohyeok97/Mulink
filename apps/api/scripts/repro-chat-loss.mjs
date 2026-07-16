@@ -67,29 +67,68 @@ async function setup() {
 }
 
 // 한 참여자를 나타내는 헤드리스 클라이언트. 보낸 번호·받은 번호를 기록한다.
+// 앱과 동일한 해결 로직(재연결 옵션 + 재연결 시 재동기화 + 미전송 재전송 큐)을
+// 넣어야 "해결 후" 수치가 나온다. 이 로직이 없으면 스크립트는 계속 유실을 보고한다.
 function makeClient(label, token, roomId) {
-  const socket = io(API, { auth: { token } });
+  // 재연결 폭풍 완화: 지수 백오프(1s→5s) + 지터(0.5)
+  const socket = io(API, {
+    auth: { token },
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    randomizationFactor: 0.5,
+  });
   const sent = new Set(); // 내가 보낸 seq
   const received = new Set(); // 내가 상대에게서 받은 seq
+  const pending = new Map(); // clientMsgId → {content} (미ack)
   let seq = 0;
+  let lastReceivedId = 0; // 재동기화 커서
 
-  socket.on('connect', () => socket.emit('chat:join', { roomId }));
-  socket.on('chat:message', (msg) => {
-    // 상대가 보낸 것만 집계 (내 메시지 에코는 제외)
-    const m = /^\[(\w+)#(\d+)\]/.exec(msg.content);
-    if (m && m[1] !== label) received.add(Number(m[2]));
+  // 상대 메시지면 seq를 received에 집계 (내 에코 제외)
+  const tally = (msg) => {
+    const x = /^\[(\w+)#(\d+)\]/.exec(msg.content);
+    if (x && x[1] !== label) received.add(Number(x[2]));
+  };
+
+  socket.on('connect', async () => {
+    socket.emit('chat:join', { roomId });
+    // ③ 미전송 재전송 (clientMsgId 유지 → 서버가 되실어 중복 제거)
+    for (const [clientMsgId, m] of pending) {
+      socket.emit('chat:send', { roomId, content: m.content, clientMsgId });
+    }
+    // ② 재동기화: 마지막 수신 id 초과분 조회 후 상대 메시지 집계에 반영
+    try {
+      const res = await fetch(
+        `${API}/chat-rooms/${roomId}/messages?after=${lastReceivedId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        for (const msg of rows) {
+          if (msg.id > lastReceivedId) lastReceivedId = msg.id;
+          tally(msg);
+        }
+      }
+    } catch {
+      // 재동기화 실패는 다음 재연결에서 재시도
+    }
   });
+
+  socket.on('chat:message', (msg) => {
+    if (msg.id > lastReceivedId) lastReceivedId = msg.id;
+    if (msg.clientMsgId) pending.delete(msg.clientMsgId);
+    tally(msg);
+  });
+  socket.on('chat:ack', ({ clientMsgId }) => pending.delete(clientMsgId));
 
   return {
     label,
     send() {
       seq += 1;
       sent.add(seq);
-      socket.emit('chat:send', {
-        roomId,
-        content: `[${label}#${seq}]`,
-        clientMsgId: `${label}-${seq}`,
-      });
+      const clientMsgId = `${label}-${seq}`;
+      const content = `[${label}#${seq}]`;
+      pending.set(clientMsgId, { content });
+      socket.emit('chat:send', { roomId, content, clientMsgId });
     },
     stats: () => ({ sent, received }),
     close: () => socket.close(),
@@ -126,7 +165,7 @@ async function main() {
 
   await sleep(CONFIG.totalDurationMs);
   clearInterval(sender);
-  await sleep(1500); // 마지막 인플라이트 정리 대기
+  await sleep(3000); // 마지막 인플라이트·재동기화 정리 대기
 
   // 유실 집계: 내가 보낸 seq 중 상대가 못 받은 것
   const report = (fromLabel, from, toName, to) => {
