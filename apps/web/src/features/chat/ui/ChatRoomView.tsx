@@ -12,20 +12,13 @@ interface ChatRoomViewProps {
 }
 
 export function ChatRoomView({ roomId, myId, initialMessages }: ChatRoomViewProps) {
-  const { connected, messages, read, pending, connect, joinRoom, sendMessage, markRead } = useChatSocket();
+  const { connected, messages, read, pending, connect, sendMessage, markRead } = useChatSocket();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 마운트: 소켓 연결 후 방 입장 + 초기 내역 세팅
+  // 마운트·방 전환 시 연결 + 방 입장 (connect가 연결 완료 후 입장까지 처리)
   useEffect(() => {
-    let cancelled = false;
-    void connect().then(() => {
-      if (!cancelled) joinRoom(roomId, initialMessages);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // roomId 바뀌면 재입장 (connect/joinRoom은 store 액션이라 안정적)
+    void connect(roomId, initialMessages);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
@@ -48,9 +41,7 @@ export function ChatRoomView({ roomId, myId, initialMessages }: ChatRoomViewProp
   return (
     <div className="flex h-full flex-col">
       {!connected && (
-        <div className="bg-(--neutral-100) py-1 text-center text-xs text-(--neutral-500)">
-          연결이 끊겨 재연결 중…
-        </div>
+        <div className="bg-(--neutral-100) py-1 text-center text-xs text-(--neutral-500)">연결이 끊겨 재연결 중…</div>
       )}
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
         {messages.length === 0 ? (
@@ -61,11 +52,7 @@ export function ChatRoomView({ roomId, myId, initialMessages }: ChatRoomViewProp
               key={message.id}
               message={message}
               isMine={message.senderId === myId}
-              readByPartner={
-                read !== null &&
-                read.readerId !== myId &&
-                read.lastReadMessageId >= message.id
-              }
+              readByPartner={read !== null && read.readerId !== myId && read.lastReadMessageId >= message.id}
             />
           ))
         )}
