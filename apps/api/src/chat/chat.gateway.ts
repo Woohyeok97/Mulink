@@ -88,8 +88,10 @@ export class ChatGateway implements OnGatewayInit {
       this.userId(socket),
       body.roomId,
       body.content,
+      body.clientMsgId,
     );
-    // 방 전원에게 새 메시지 (clientMsgId 되실어 발신자 낙관 렌더분 중복 제거)
+    // 방 전원에게 새 메시지 (clientMsgId 되실어 발신자 낙관 렌더분 중복 제거).
+    // 발신자도 이 broadcast를 받으므로 별도 ack 없이 이걸로 미전송 큐를 확정한다.
     this.server.to(body.roomId).emit('chat:message', {
       id: saved.id,
       roomId: saved.roomId,
@@ -98,8 +100,6 @@ export class ChatGateway implements OnGatewayInit {
       createdAt: saved.createdAt,
       clientMsgId: body.clientMsgId,
     });
-    // 발신자에게 ack — 미전송 큐 확정 제거용
-    socket.emit('chat:ack', { clientMsgId: body.clientMsgId, id: saved.id });
   }
 
   // 읽음 — 뷰어 커서 갱신 → 상대에게 읽음 위치 브로드캐스트(실시간 읽음 표시)

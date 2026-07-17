@@ -63,13 +63,19 @@ async function setup() {
   // 방 정보로 코치 id 확보 → 코치 토큰 발급
   const coachTok = (await getJson(`${API}/auth/dev/token?userId=${room.coachId}`)).accessToken;
 
-  return { roomId: room.id, studentTok, coachTok };
+  // 방은 멱등이라 재사용된다 → 이전 실행 메시지가 DB에 누적돼 있다.
+  // 측정 시작 시점의 마지막 id를 baseline으로 잡아, 재동기화·수신 집계가 이번 실행분만
+  // 보게 한다(과거 메시지 오염 차단). baseline이 각 클라이언트 lastReceivedId 초기값이 됨.
+  const history = await getJson(`${API}/chat-rooms/${room.id}/messages`, studentTok);
+  const baselineId = history.length ? history[history.length - 1].id : 0;
+
+  return { roomId: room.id, studentTok, coachTok, baselineId };
 }
 
 // 한 참여자를 나타내는 헤드리스 클라이언트. 보낸 번호·받은 번호를 기록한다.
 // 앱과 동일한 해결 로직(재연결 옵션 + 재연결 시 재동기화 + 미전송 재전송 큐)을
 // 넣어야 "해결 후" 수치가 나온다. 이 로직이 없으면 스크립트는 계속 유실을 보고한다.
-function makeClient(label, token, roomId) {
+function makeClient(label, token, roomId, baselineId) {
   // 재연결 폭풍 완화: 지수 백오프(1s→5s) + 지터(0.5)
   const socket = io(API, {
     auth: { token },
@@ -81,7 +87,7 @@ function makeClient(label, token, roomId) {
   const received = new Set(); // 내가 상대에게서 받은 seq
   const pending = new Map(); // clientMsgId → {content} (미ack)
   let seq = 0;
-  let lastReceivedId = 0; // 재동기화 커서
+  let lastReceivedId = baselineId; // 재동기화 커서 — 이전 실행분은 건너뛰도록 baseline부터
 
   // 상대 메시지면 seq를 received에 집계 (내 에코 제외)
   const tally = (msg) => {
@@ -89,13 +95,8 @@ function makeClient(label, token, roomId) {
     if (x && x[1] !== label) received.add(Number(x[2]));
   };
 
-  socket.on('connect', async () => {
-    socket.emit('chat:join', { roomId });
-    // ③ 미전송 재전송 (clientMsgId 유지 → 서버가 되실어 중복 제거)
-    for (const [clientMsgId, m] of pending) {
-      socket.emit('chat:send', { roomId, content: m.content, clientMsgId });
-    }
-    // ② 재동기화: 마지막 수신 id 초과분 조회 후 상대 메시지 집계에 반영
+  // 한 번의 재동기화: 커서 이후 메시지를 조회해 집계·커서 갱신(멱등)
+  const resyncOnce = async () => {
     try {
       const res = await fetch(
         `${API}/chat-rooms/${roomId}/messages?after=${lastReceivedId}`,
@@ -109,16 +110,28 @@ function makeClient(label, token, roomId) {
         }
       }
     } catch {
-      // 재동기화 실패는 다음 재연결에서 재시도
+      // 재동기화 실패는 다음 재연결·재시도에서 만회
     }
+  };
+
+  socket.on('connect', () => {
+    socket.emit('chat:join', { roomId });
+    // ③ 미전송 재전송 (clientMsgId 유지 → 서버가 되실어 중복 제거)
+    for (const [clientMsgId, m] of pending) {
+      socket.emit('chat:send', { roomId, content: m.content, clientMsgId });
+    }
+    // ② 재동기화: 재연결 직후 한 번 + 잠시 뒤 한 번 더 — 상대 재전송이 저장되기 전
+    // 조회하면 놓치는 경합을 만회. 커서 기준이라 여러 번 해도 멱등.
+    void resyncOnce();
+    setTimeout(() => void resyncOnce(), 1500);
   });
 
+  // 발신자도 broadcast를 받으므로 chat:message에서 clientMsgId로 미전송 큐를 확정한다.
   socket.on('chat:message', (msg) => {
     if (msg.id > lastReceivedId) lastReceivedId = msg.id;
     if (msg.clientMsgId) pending.delete(msg.clientMsgId);
     tally(msg);
   });
-  socket.on('chat:ack', ({ clientMsgId }) => pending.delete(clientMsgId));
 
   return {
     label,
@@ -138,11 +151,11 @@ function makeClient(label, token, roomId) {
 
 async function main() {
   console.log('재현 조건:', JSON.stringify(CONFIG));
-  const { roomId, studentTok, coachTok } = await setup();
-  console.log('roomId:', roomId);
+  const { roomId, studentTok, coachTok, baselineId } = await setup();
+  console.log('roomId:', roomId, '| baselineId:', baselineId);
 
-  const student = makeClient('S', studentTok, roomId);
-  const coach = makeClient('C', coachTok, roomId);
+  const student = makeClient('S', studentTok, roomId, baselineId);
+  const coach = makeClient('C', coachTok, roomId, baselineId);
   await sleep(1000); // 연결·join 대기
 
   // 양쪽이 일정 rate로 계속 전송
@@ -182,6 +195,39 @@ async function main() {
   console.log('\n=== 결과 ===');
   const sToC = report('학생(S)', student, '코치(C)', coach);
   const cToS = report('코치(C)', coach, '학생(S)', student);
+
+  // [임시 진단] 유실 seq가 DB에 저장은 됐는지 — 저장O면 재동기화 놓침(경합), 저장X면 재전송 실패
+  {
+    const all = await getJson(
+      `${API}/chat-rooms/${roomId}/messages?after=${baselineId}`,
+      studentTok,
+    );
+    const dbSeq = (label) =>
+      new Set(
+        all
+          .map((m) => {
+            const x = new RegExp(`^\\[${label}#(\\d+)\\]`).exec(m.content);
+            return x ? Number(x[1]) : null;
+          })
+          .filter((n) => n !== null),
+      );
+    const lostS = [...student.stats().sent].filter(
+      (n) => !coach.stats().received.has(n),
+    );
+    const lostC = [...coach.stats().sent].filter(
+      (n) => !student.stats().received.has(n),
+    );
+    const dbS = dbSeq('S');
+    const dbC = dbSeq('C');
+    console.log(
+      '[진단] S→C 유실:',
+      lostS.map((n) => `${n}(DB:${dbS.has(n) ? 'O' : 'X'})`).join(' ') || '없음',
+    );
+    console.log(
+      '[진단] C→S 유실:',
+      lostC.map((n) => `${n}(DB:${dbC.has(n) ? 'O' : 'X'})`).join(' ') || '없음',
+    );
+  }
   const totalSent = sToC.sent + cToS.sent;
   const totalLost = sToC.lost + cToS.lost;
   const totalRate = totalSent ? ((totalLost / totalSent) * 100).toFixed(1) : '0.0';

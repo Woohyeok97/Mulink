@@ -3,22 +3,16 @@
 import { useEffect, useRef } from 'react';
 import { useChatSocket } from '../store/chat-socket.store';
 import { MessageBubble } from './MessageBubble';
-import { ConnectionStatus } from './ConnectionStatus';
 import type { ChatMessage } from '@/entities/chat/chat.type';
 
-type Props = { roomId: string; myId: string; initialMessages: ChatMessage[] };
+interface ChatRoomViewProps {
+  roomId: string;
+  myId: string;
+  initialMessages: ChatMessage[];
+}
 
-export function ChatRoomView({ roomId, myId, initialMessages }: Props) {
-  const {
-    connected,
-    messages,
-    read,
-    pending,
-    connect,
-    joinRoom,
-    sendMessage,
-    markRead,
-  } = useChatSocket();
+export function ChatRoomView({ roomId, myId, initialMessages }: ChatRoomViewProps) {
+  const { connected, messages, read, pending, connect, joinRoom, sendMessage, markRead } = useChatSocket();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -53,31 +47,33 @@ export function ChatRoomView({ roomId, myId, initialMessages }: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      <ConnectionStatus connected={connected} />
+      {!connected && (
+        <div className="bg-(--neutral-100) py-1 text-center text-xs text-(--neutral-500)">
+          연결이 끊겨 재연결 중…
+        </div>
+      )}
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <p className="text-center text-sm text-(--neutral-400)">
-            대화를 시작해보세요
-          </p>
+          <p className="text-center text-sm text-(--neutral-400)">대화를 시작해보세요</p>
         ) : (
-          messages.map((m) => (
+          messages.map(message => (
             <MessageBubble
-              key={m.id}
-              message={m}
-              isMine={m.senderId === myId}
+              key={message.id}
+              message={message}
+              isMine={message.senderId === myId}
               readByPartner={
                 read !== null &&
                 read.readerId !== myId &&
-                read.lastReadMessageId >= m.id
+                read.lastReadMessageId >= message.id
               }
             />
           ))
         )}
         {/* 아직 서버 ack를 못 받은 미전송 메시지 — 흐리게 '전송 중' 표시 */}
-        {pending.map((p) => (
-          <div key={p.clientMsgId} className="flex justify-end opacity-50">
+        {pending.map(message => (
+          <div key={message.clientMsgId} className="flex justify-end opacity-50">
             <div className="max-w-[70%] rounded-lg bg-(--neutral-100) px-3 py-2">
-              <p className="text-sm text-(--neutral-800)">{p.content}</p>
+              <p className="text-sm text-(--neutral-800)">{message.content}</p>
               <span className="text-xs text-(--neutral-400)">전송 중…</span>
             </div>
           </div>
@@ -89,13 +85,11 @@ export function ChatRoomView({ roomId, myId, initialMessages }: Props) {
           ref={inputRef}
           className="flex-1 rounded-md border border-(--neutral-200) px-3 py-2 text-sm"
           placeholder="메시지 입력"
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter') handleSend();
           }}
         />
-        <button
-          className="rounded-md bg-(--green-600) px-4 text-sm text-white"
-          onClick={handleSend}>
+        <button className="rounded-md bg-(--green-600) px-4 text-sm text-white" onClick={handleSend}>
           전송
         </button>
       </div>
