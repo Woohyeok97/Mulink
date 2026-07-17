@@ -141,7 +141,9 @@ model ChatMessage {
   senderId  String   @db.Uuid // FK — User.id(UUID)와 타입 일치
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content   String // 메시지 내용
+  clientMsgId String? // 클라이언트가 부여한 임시 고유표 — 재전송 중복 저장 방지(멱등)용
   createdAt DateTime @default(now())
 
+  @@unique([roomId, clientMsgId]) // 같은 방에서 같은 clientMsgId 재전송은 upsert로 기존 메시지 반환
   @@index([roomId, id]) // 방별 메시지를 id 순으로 훑는 내역 조회·재동기화의 핵심 인덱스
 }

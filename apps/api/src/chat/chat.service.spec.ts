@@ -13,7 +13,12 @@ describe('ChatService', () => {
       update: jest.Mock;
       findMany: jest.Mock;
     };
-    chatMessage: { create: jest.Mock; findMany: jest.Mock; count: jest.Mock };
+    chatMessage: {
+      create: jest.Mock;
+      upsert: jest.Mock;
+      findMany: jest.Mock;
+      count: jest.Mock;
+    };
   };
 
   beforeEach(async () => {
@@ -25,7 +30,12 @@ describe('ChatService', () => {
         update: jest.fn(),
         findMany: jest.fn(),
       },
-      chatMessage: { create: jest.fn(), findMany: jest.fn(), count: jest.fn() },
+      chatMessage: {
+        create: jest.fn(),
+        upsert: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
+      },
     };
     const moduleRef = await Test.createTestingModule({
       providers: [ChatService, { provide: PrismaService, useValue: prisma }],
@@ -52,8 +62,13 @@ describe('ChatService', () => {
       coachId: 'coach1',
       request: { studentId: 'me-student' },
     });
-    prisma.chatRoom.findUnique.mockResolvedValue({ id: 'room1', proposalId: 'p1' });
-    const room = await service.createOrGetRoom('me-student', { proposalId: 'p1' });
+    prisma.chatRoom.findUnique.mockResolvedValue({
+      id: 'room1',
+      proposalId: 'p1',
+    });
+    const room = await service.createOrGetRoom('me-student', {
+      proposalId: 'p1',
+    });
     expect(room.id).toBe('room1');
     expect(prisma.chatRoom.create).not.toHaveBeenCalled();
   });
@@ -74,23 +89,33 @@ describe('ChatService', () => {
     expect(rows).toHaveLength(2);
   });
 
-  // 메시지 저장은 방 참여자만 가능하고 senderId를 호출자로 고정한다
-  it('saveMessage는 참여자만 저장하고 senderId를 호출자로 고정한다', async () => {
+  // 메시지 저장은 방 참여자만 가능하고 senderId를 호출자로 고정한다.
+  // 재전송 중복 방지를 위해 (roomId, clientMsgId)로 upsert한다(멱등).
+  it('saveMessage는 참여자만 저장하고 clientMsgId로 upsert한다', async () => {
     prisma.chatRoom.findUnique.mockResolvedValue({
       id: 'room1',
       studentId: 'me',
       coachId: 'coach1',
     });
-    prisma.chatMessage.create.mockResolvedValue({
+    prisma.chatMessage.upsert.mockResolvedValue({
       id: 1,
       roomId: 'room1',
       senderId: 'me',
       content: '안녕',
+      clientMsgId: 'c1',
       createdAt: new Date(),
     });
-    const msg = await service.saveMessage('me', 'room1', '안녕');
-    expect(prisma.chatMessage.create).toHaveBeenCalledWith({
-      data: { roomId: 'room1', senderId: 'me', content: '안녕' },
+    const msg = await service.saveMessage('me', 'room1', '안녕', 'c1');
+    // 같은 (roomId, clientMsgId) 재전송은 기존 메시지 반환(update: {})
+    expect(prisma.chatMessage.upsert).toHaveBeenCalledWith({
+      where: { roomId_clientMsgId: { roomId: 'room1', clientMsgId: 'c1' } },
+      create: {
+        roomId: 'room1',
+        senderId: 'me',
+        content: '안녕',
+        clientMsgId: 'c1',
+      },
+      update: {},
     });
     expect(msg.senderId).toBe('me');
   });
@@ -111,7 +136,12 @@ describe('ChatService', () => {
         },
         student: { nickname: '학생닉' },
         messages: [
-          { id: 8, content: '마지막', createdAt: new Date(), senderId: 'coach1' },
+          {
+            id: 8,
+            content: '마지막',
+            createdAt: new Date(),
+            senderId: 'coach1',
+          },
         ],
       },
     ]);
