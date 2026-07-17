@@ -7,8 +7,19 @@ import {
   type OnGatewayInit,
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
+import type { DefaultEventsMap } from 'socket.io';
+import type { User } from '@supabase/supabase-js';
 import { SupabaseService } from '../auth/supabase.service';
 import { ChatService } from './chat.service';
+
+// 핸드셰이크 미들웨어가 socket.data.user에 심는 인증 사용자 — .user 접근을 타입 안전하게.
+// 이벤트 맵은 기본값 유지(emit 등 정상 동작), SocketData만 좁힌다.
+type AuthedSocket = Socket<
+  DefaultEventsMap,
+  DefaultEventsMap,
+  DefaultEventsMap,
+  { user: User }
+>;
 
 // HTTP enableCors는 소켓에 안 걸리므로 게이트웨이에서 직접 CORS 지정
 @WebSocketGateway({
@@ -30,30 +41,33 @@ export class ChatGateway implements OnGatewayInit {
   // socket.data.user 없이 실행되는 레이스가 있었다. 미들웨어는 next() 호출 전까지
   // connect 이벤트 자체가 발생하지 않아 이 레이스를 원천 차단한다(소켓 인증 정석).
   afterInit(server: Server) {
-    server.use(async (socket, next) => {
-      const token = socket.handshake.auth?.token as string | undefined;
-      if (!token) {
-        next(new Error('인증 토큰이 없습니다.'));
-        return;
-      }
-      const { data, error } = await this.supabase.getUser(token);
-      if (error || !data?.user) {
-        next(new Error('유효하지 않은 토큰입니다.'));
-        return;
-      }
-      socket.data.user = data.user;
-      next();
+    // socket.io 미들웨어는 동기 콜백을 기대하므로, async 검증은 void로 감싼다
+    server.use((socket, next) => {
+      void (async () => {
+        const token = socket.handshake.auth?.token as string | undefined;
+        if (!token) {
+          next(new Error('인증 토큰이 없습니다.'));
+          return;
+        }
+        const { data, error } = await this.supabase.getUser(token);
+        if (error || !data?.user) {
+          next(new Error('유효하지 않은 토큰입니다.'));
+          return;
+        }
+        (socket as AuthedSocket).data.user = data.user;
+        next();
+      })();
     });
   }
 
-  private userId(socket: Socket): string {
-    return (socket.data.user as { id: string }).id;
+  private userId(socket: AuthedSocket): string {
+    return socket.data.user.id;
   }
 
   // 방 입장 — 참여자 대조 후 socket.io room 조인
   @SubscribeMessage('chat:join')
   async onJoin(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket: AuthedSocket,
     @MessageBody() body: { roomId: string },
   ) {
     await this.chatService.getRoomForParticipant(
@@ -66,7 +80,7 @@ export class ChatGateway implements OnGatewayInit {
   // 메시지 전송 — DB 저장 먼저 → 방 브로드캐스트(순서 고정: 저장돼야 재배포 유실 방지)
   @SubscribeMessage('chat:send')
   async onSend(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket: AuthedSocket,
     @MessageBody()
     body: { roomId: string; content: string; clientMsgId: string },
   ) {
@@ -91,7 +105,7 @@ export class ChatGateway implements OnGatewayInit {
   // 읽음 — 뷰어 커서 갱신 → 상대에게 읽음 위치 브로드캐스트(실시간 읽음 표시)
   @SubscribeMessage('chat:read')
   async onRead(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket: AuthedSocket,
     @MessageBody() body: { roomId: string; lastReadMessageId: number },
   ) {
     const result = await this.chatService.markRead(
