@@ -11,10 +11,13 @@ import {
   DropdownMenuSeparator
 } from '@/shared/ui/dropdown/dropdown';
 import { getCurrentUser } from '@/entities/user/user.api';
+import { getUnreadTotal } from '@/entities/chat/chat.api';
+import { Badge } from '@/shared/ui/badge/badge';
 import { logoutAction } from '@/features/auth/auth.action';
 
 export async function Header() {
   const user = await getCurrentUser();
+  const unread = user ? await getUnreadTotal() : 0;
 
   return (
     <header
@@ -46,11 +49,15 @@ export async function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center rounded-full p-1 transition-colors hover:bg-(--green-50) outline-none focus-visible:ring-2 focus-visible:ring-(--green-400)"
+                  className="relative flex items-center rounded-full p-1 transition-colors hover:bg-(--green-50) outline-none focus-visible:ring-2 focus-visible:ring-(--green-400)"
                   aria-label="내 계정 메뉴 열기">
                   <Avatar size="sm">
                     <AvatarFallback>{user.nickname.charAt(0)}</AvatarFallback>
                   </Avatar>
+                  {/* 안읽음 있을 때 아바타 우상단 점 (새로고침 시 갱신) */}
+                  {unread > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-(--green-600)" />
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -83,6 +90,17 @@ export async function Header() {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem asChild>
+                  <Link href="/chat">
+                    채팅
+                    {unread > 0 && (
+                      <Badge variant="brand" className="ml-auto">
+                        {unread}
+                      </Badge>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <form action={logoutAction}>
                   <DropdownMenuItem variant="destructive" asChild>
                     <button type="submit" className="w-full">

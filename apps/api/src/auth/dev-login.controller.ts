@@ -56,4 +56,18 @@ export class DevLoginController {
     const code = await this.sessionCode.createSessionCode(sessionTokens);
     res.redirect(`${WEB_ORIGIN}/auth/callback?code=${code}`);
   }
+
+  // userId로 access_token을 JSON으로 바로 반환한다 (redirect 없이).
+  // FE-2 채팅 유실 측정 스크립트가 소켓 핸드셰이크에 넣을 토큰을 헤드리스로 얻는 용도.
+  @Get('token')
+  async devToken(@Query('userId') userId: string) {
+    assertDevEnv();
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
+    const tokens = await this.admin.createSessionTokens({
+      kakaoId: user.kakaoId,
+      nickname: user.nickname,
+    });
+    return { accessToken: tokens.accessToken, userId: user.id, role: user.role };
+  }
 }

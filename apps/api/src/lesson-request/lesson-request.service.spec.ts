@@ -94,8 +94,9 @@ describe('LessonRequestService', () => {
             id: 'p-1',
             message: '안녕',
             createdAt: proposalCreatedAt,
+            chatRoom: { id: 'room-1' }, // 이 제안으로 열린 방
             coach: {
-              coachProfile: { activityName: '김보컬', region: 'SEOUL' },
+              coachProfile: { activityName: '김보컬', imageUrl: null, region: 'SEOUL' },
             },
           },
         ],
@@ -103,7 +104,7 @@ describe('LessonRequestService', () => {
 
       const result = await service.getMyLessonRequest('uuid-1');
 
-      // include로 proposals(최신순) + coach.coachProfile 요청 확인
+      // include로 proposals(최신순) + coach.coachProfile + chatRoom 요청 확인
       expect(prisma.lessonRequest.findFirst).toHaveBeenCalledWith({
         where: { studentId: 'uuid-1' },
         include: {
@@ -113,10 +114,11 @@ describe('LessonRequestService', () => {
               id: true,
               message: true,
               createdAt: true,
+              chatRoom: { select: { id: true } },
               coach: {
                 select: {
                   coachProfile: {
-                    select: { activityName: true, region: true },
+                    select: { activityName: true, imageUrl: true, region: true },
                   },
                 },
               },
@@ -124,13 +126,39 @@ describe('LessonRequestService', () => {
           },
         },
       });
-      // coach.coachProfile 한 겹을 벗겨 coachProfile 키로 평탄화
+      // coach.coachProfile 한 겹을 벗겨 평탄화 + 방 있으면 roomId 부여
       expect(result!.proposals[0]).toEqual({
         id: 'p-1',
         message: '안녕',
         createdAt: proposalCreatedAt,
-        coachProfile: { activityName: '김보컬', region: 'SEOUL' },
+        coachProfile: { activityName: '김보컬', imageUrl: null, region: 'SEOUL' },
+        roomId: 'room-1',
       });
+    });
+
+    it('방이 없는 제안은 roomId가 null이다', async () => {
+      prisma.lessonRequest.findFirst.mockResolvedValue({
+        id: 'req-1',
+        studentId: 'uuid-1',
+        region: 'SEOUL',
+        goal: 'g',
+        genre: 'POP',
+        createdAt: new Date(),
+        proposals: [
+          {
+            id: 'p-2',
+            message: '아직 방 없음',
+            createdAt: new Date(),
+            chatRoom: null, // 방 미개설
+            coach: {
+              coachProfile: { activityName: '박보컬', imageUrl: null, region: 'BUSAN' },
+            },
+          },
+        ],
+      });
+
+      const result = await service.getMyLessonRequest('uuid-1');
+      expect(result!.proposals[0].roomId).toBeNull();
     });
 
     it('신청이 없으면 null을 반환한다', async () => {

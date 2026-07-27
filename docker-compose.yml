@@ -15,6 +15,8 @@ services:
     # 여기서 development로 박아두면 실서버에서도 dev-login이 열리는 사고가 난다.
     environment:
       REDIS_URL: redis://redis:6379
+      # 기본은 production. 측정 시에만 쉘에서 NODE_ENV=development로 넘겨 dev 엔드포인트를 연다.
+      NODE_ENV: ${NODE_ENV:-production}
     depends_on:
       - redis
 

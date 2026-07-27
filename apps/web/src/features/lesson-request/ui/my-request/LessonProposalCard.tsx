@@ -3,7 +3,7 @@
 import { Clock } from 'lucide-react';
 
 import { REGION_LABEL, type LessonProposal } from '@/entities/lesson-request/lesson-request.type';
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar/avatar';
 import { Button } from '@/shared/ui/button/button';
 
 function formatRelativeTime(isoString: string): string {
@@ -31,6 +31,7 @@ export function LessonProposalCard({ offer, onViewProfile }: LessonProposalCardP
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar size="default">
+            <AvatarImage src={coachProfile.imageUrl ?? undefined} alt={coachProfile.activityName} />
             <AvatarFallback>{initial}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-0.5">

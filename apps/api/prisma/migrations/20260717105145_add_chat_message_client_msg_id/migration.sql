@@ -1,0 +1,2 @@
+-- 빈 마이그레이션(no-op). 실제 컬럼·인덱스 추가는 20260717000000_add_chat_message_client_msg_id 에서 수행됨.
+-- migrate dev --create-only 시도 중 생성된 빈 폴더로, 이미 deploy 이력에 기록되어 삭제하지 않고 no-op으로 남긴다.

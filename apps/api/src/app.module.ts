@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module';
 import { CoachProfileModule } from './coach-profile/coach-profile.module';
 import { LessonRequestModule } from './lesson-request/lesson-request.module';
 import { LessonProposalModule } from './lesson-proposal/lesson-proposal.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LessonProposalModule } from './lesson-proposal/lesson-proposal.module';
     CoachProfileModule,
     LessonRequestModule,
     LessonProposalModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -16,6 +16,7 @@ export const CoachRegisterSchema = z.object({
   region: z.enum(regionValues, {
     error: '지역을 선택해 주세요.',
   }),
+  imageUrl: z.string().optional(), // 프로필 이미지 S3 공개 URL (선택)
 });
 
 // 코치 신청 폼 타입

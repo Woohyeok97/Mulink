@@ -9,8 +9,10 @@ const offer: LessonProposal = {
   id: 'offer-1',
   message: '안녕하세요',
   createdAt: new Date().toISOString(),
+  roomId: null,
   coachProfile: {
     activityName: '홍길동',
+    imageUrl: null,
     region: 'SEOUL'
   }
 };

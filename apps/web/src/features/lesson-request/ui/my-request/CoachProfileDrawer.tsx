@@ -1,8 +1,11 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+import { createChatRoomAction } from '@/features/chat/chat.action';
 // components
 import { REGION_LABEL, type LessonProposal } from '@/entities/lesson-request/lesson-request.type';
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar/avatar';
 import { Badge } from '@/shared/ui/badge/badge';
 import { Button } from '@/shared/ui/button/button';
 import {
@@ -22,6 +25,22 @@ interface CoachProfileDrawerProps {
 }
 
 export function CoachProfileDrawer({ offer, onClose }: CoachProfileDrawerProps) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  // 채팅 버튼 핸들러 — 방 있으면 바로 이동, 없으면 생성 후 이동
+  const handleChat = () => {
+    if (!offer) return;
+    if (offer.roomId) {
+      router.push(`/chat/${offer.roomId}`);
+      return;
+    }
+    startTransition(async () => {
+      const result = await createChatRoomAction(offer.id);
+      if ('roomId' in result) router.push(`/chat/${result.roomId}`);
+    });
+  };
+
   return (
     <Drawer
       direction="right"
@@ -35,6 +54,7 @@ export function CoachProfileDrawer({ offer, onClose }: CoachProfileDrawerProps) 
             <DrawerHeader className="p-6 pb-0">
               <div className="flex flex-col items-center gap-3 pb-4">
                 <Avatar size="lg">
+                  <AvatarImage src={offer.coachProfile.imageUrl ?? undefined} alt={offer.coachProfile.activityName} />
                   <AvatarFallback>{offer.coachProfile.activityName.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-center">
@@ -79,12 +99,12 @@ export function CoachProfileDrawer({ offer, onClose }: CoachProfileDrawerProps) 
 
             <DrawerFooter className="gap-2 p-6 pt-4">
               <Button
-                variant="outline"
+                variant="default"
                 size="default"
-                className="bg-[#FEE500]"
-                leftIcon={<MessageCircle size={20} fill="rgba(0,0,0,0.85)" stroke="none" aria-hidden="true" />}
-                onClick={() => {}}>
-                카톡 1:1 상담
+                loading={pending}
+                leftIcon={<MessageCircle size={20} aria-hidden="true" />}
+                onClick={handleChat}>
+                {offer.roomId ? '채팅 계속하기' : '채팅하기'}
               </Button>
             </DrawerFooter>
           </>
