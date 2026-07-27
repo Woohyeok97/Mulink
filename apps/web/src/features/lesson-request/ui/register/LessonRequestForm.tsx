@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useForm, useController } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 // components
@@ -11,16 +10,13 @@ import { Button } from '@/shared/ui/button/button';
 import { Textarea } from '@/shared/ui/textarea/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select/select';
 // schemas
-import { LessonRegisterSchema, REGIONS, GENRES, type LessonRegisterFormType } from '../../lesson-register.schema';
-// actions
-import { lessonRegisterAction } from '../../lesson-register.action';
+import { LessonRequestSchema, REGIONS, GENRES, type LessonRequestFormType } from '../../lesson-request.schema';
+// mutations
+import { useCreateLessonRequestMutation } from '../../lesson-request.mutate';
 
-export function LessonRegisterForm() {
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState<LessonRegisterFormType | null>(null);
-
-  const { register, control, handleSubmit, formState } = useForm<LessonRegisterFormType>({
-    resolver: zodResolver(LessonRegisterSchema),
+export function LessonRequestForm() {
+  const { register, control, handleSubmit, formState } = useForm<LessonRequestFormType>({
+    resolver: zodResolver(LessonRequestSchema),
     defaultValues: {
       region: undefined,
       genre: undefined,
@@ -29,7 +25,7 @@ export function LessonRegisterForm() {
   });
 
   // 폼 상태
-  const { isSubmitting, isValid } = formState;
+  const { isValid } = formState;
 
   // 지역 선택 controller
   const { field: regionField } = useController({ name: 'region', control });
@@ -37,16 +33,11 @@ export function LessonRegisterForm() {
   // 선호 장르 controller
   const { field: genreField } = useController({ name: 'genre', control });
 
+  // 레슨 신청 mutate
+  const { mutate, isPending, isSuccess, data: mutationResult, variables: submitted } = useCreateLessonRequestMutation();
+
   // 레슨 신청 핸들러
-  const onSubmit = handleSubmit(async data => {
-    setServerError(null);
-    const result = await lessonRegisterAction(data);
-    if (result?.error) {
-      setServerError(result.error);
-      return;
-    }
-    setSubmitted(data);
-  });
+  const onSubmit = handleSubmit(data => mutate(data));
 
   // 레슨 신청 버튼 활성화 상태
   const canSubmit = [isValid].every(Boolean);
@@ -56,15 +47,15 @@ export function LessonRegisterForm() {
       <SidePanel control={control} />
 
       <main className="flex flex-1 flex-col justify-start overflow-y-auto bg-white px-5 py-7 sm:justify-center sm:px-10 sm:py-11 lg:px-22 lg:py-16">
-        {submitted ? (
+        {isSuccess && !mutationResult?.error ? (
           <div className="mx-auto flex w-full max-w-130 flex-1 flex-col justify-center">
             <SuccessView region={submitted.region} genre={submitted.genre} />
           </div>
         ) : (
           <form onSubmit={onSubmit} noValidate className="mx-auto flex w-full max-w-130 flex-col">
-            {serverError ? (
+            {mutationResult?.error ? (
               <div role="alert" className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive">
-                {serverError}
+                {mutationResult.error}
               </div>
             ) : null}
 
@@ -150,7 +141,7 @@ export function LessonRegisterForm() {
                 variant="emphasis"
                 size="lg"
                 disabled={!canSubmit}
-                loading={isSubmitting}
+                loading={isPending}
                 rightIcon={<ArrowRight className="size-4.5" />}
                 className="w-full rounded-full">
                 코치 매칭 받기

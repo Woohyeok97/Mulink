@@ -1,18 +1,17 @@
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { CoachRegisterForm } from './CoachRegisterForm';
-import * as coachAction from '../coach-register.action';
+import { LessonRequestForm } from './LessonRequestForm';
+import * as lessonRequestAction from '../../lesson-request.action';
 
-vi.mock('../coach-register.action', () => ({
-  coachRegisterAction: vi.fn()
+vi.mock('../../lesson-request.action', () => ({
+  createLessonRequestAction: vi.fn()
 }));
 
 // Radix Select는 jsdom에서 pointer/scroll API가 없어 직접 상호작용이 안 됨.
 // native <select>로 렌더링하는 단순 mock으로 대체.
-import React from 'react';
-
 type SelectContextValue = { onValueChange: (v: string) => void; value: string };
 const SelectMockContext = React.createContext<SelectContextValue>({
   onValueChange: () => {},
@@ -72,64 +71,58 @@ vi.mock('@/shared/ui/select/select', () => {
   return { Select, SelectTrigger, SelectValue, SelectContent, SelectItem };
 });
 
-const mockCoachRegisterAction = vi.mocked(coachAction.coachRegisterAction);
+const mockCreateLessonRequestAction = vi.mocked(lessonRequestAction.createLessonRequestAction);
 
 function renderForm() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <CoachRegisterForm />
+      <LessonRequestForm />
     </QueryClientProvider>
   );
 }
 
-describe('CoachRegisterForm', () => {
+async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.selectOptions(screen.getByLabelText('지역을 선택해 주세요'), 'SEOUL');
+  await user.click(screen.getByRole('button', { name: '팝' }));
+  await user.type(screen.getByPlaceholderText(/예: 음치 탈출/), '음치 탈출');
+}
+
+describe('LessonRequestForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('폼이 렌더링되면 활동명 input, 지역 select, 제출 버튼이 보임', () => {
-    renderForm();
+  it('createLessonRequestAction이 에러를 반환하면 role="alert" 영역에 에러 표시', async () => {
+    const user = userEvent.setup();
+    mockCreateLessonRequestAction.mockResolvedValueOnce({ error: '이미 레슨 신청 내역이 있습니다.' });
 
-    expect(screen.getByPlaceholderText('활동명을 입력해 주세요')).toBeInTheDocument();
-    expect(screen.getByLabelText('지역을 선택해 주세요')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /코치 가입하기/ })).toBeInTheDocument();
+    renderForm();
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: /코치 매칭 받기/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('이미 레슨 신청 내역이 있습니다.');
   });
 
-  it('빈 상태로 제출하면 "활동명을 입력해 주세요." 에러 메시지 표시', async () => {
+  it('createLessonRequestAction이 성공(undefined)하면 신청 완료 화면(SuccessView)으로 전환', async () => {
     const user = userEvent.setup();
+    mockCreateLessonRequestAction.mockResolvedValueOnce(undefined);
+
     renderForm();
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: /코치 매칭 받기/ }));
 
-    await user.click(screen.getByRole('button', { name: /코치 가입하기/ }));
-
-    expect(await screen.findByText('활동명을 입력해 주세요.')).toBeInTheDocument();
-    expect(await screen.findByText('지역을 선택해 주세요.')).toBeInTheDocument();
+    expect(await screen.findByText('신청이 완료됐어요!')).toBeInTheDocument();
   });
 
-  it('coachRegisterAction이 에러를 반환하면 role="alert" 영역에 에러 표시', async () => {
+  it('제출 중(isPending)에는 버튼이 disabled 상태', async () => {
     const user = userEvent.setup();
-    mockCoachRegisterAction.mockResolvedValueOnce({ error: '이미 코치로 등록된 계정입니다.' });
+    mockCreateLessonRequestAction.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve(undefined), 500)));
 
     renderForm();
+    await fillValidForm(user);
 
-    await user.type(screen.getByPlaceholderText('활동명을 입력해 주세요'), '테스트 코치');
-    await user.selectOptions(screen.getByLabelText('지역을 선택해 주세요'), 'SEOUL');
-
-    await user.click(screen.getByRole('button', { name: /코치 가입하기/ }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('이미 코치로 등록된 계정입니다.');
-  });
-
-  it('제출 중(isSubmitting)에는 버튼이 disabled 상태', async () => {
-    const user = userEvent.setup();
-    mockCoachRegisterAction.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve(undefined), 500)));
-
-    renderForm();
-
-    await user.type(screen.getByPlaceholderText('활동명을 입력해 주세요'), '테스트 코치');
-    await user.selectOptions(screen.getByLabelText('지역을 선택해 주세요'), 'SEOUL');
-
-    const submitButton = screen.getByRole('button', { name: /코치 가입하기/ });
+    const submitButton = screen.getByRole('button', { name: /코치 매칭 받기/ });
     await user.click(submitButton);
 
     await waitFor(() => {

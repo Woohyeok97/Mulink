@@ -11,13 +11,10 @@ import { Button } from '@/shared/ui/button/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select/select';
 // schemas
 import { CoachRegisterSchema, REGIONS, type CoachRegisterFormType } from '../coach-register.schema';
-// actions
-import { coachRegisterAction, getUploadUrlAction } from '../coach-register.action';
-// lib
-import { compressImage } from '@/shared/lib/image/compress-image';
+// mutations
+import { useCoachRegisterMutation } from '../coach-register.mutate';
 
 export function CoachRegisterForm() {
-  const [serverError, setServerError] = useState<string | null>(null);
   // 선택한 이미지 파일 — 실제 S3 업로드는 가입 제출 시에 한다 (선택만 하고 이탈 시 고아 객체 방지)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -33,7 +30,7 @@ export function CoachRegisterForm() {
   });
 
   // 폼 상태
-  const { errors, isSubmitting } = formState;
+  const { errors } = formState;
 
   // 지역 선택 controller
   const { field: regionField } = useController({ name: 'region', control });
@@ -46,7 +43,6 @@ export function CoachRegisterForm() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setServerError(null);
     setSelectedFile(file);
     // 이전 미리보기 blob URL 해제 후 새로 생성
     setPreviewUrl(prev => {
@@ -66,49 +62,17 @@ export function CoachRegisterForm() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 코치 신청 핸들러 — 이미지가 있으면 이 시점에 S3 업로드 후 URL을 담아 가입 요청
-  const onSubmit = handleSubmit(async data => {
-    setServerError(null);
+  // 코치 가입 mutate
+  const { mutate, isPending, data: mutationResult } = useCoachRegisterMutation();
 
-    let imageUrl: string | undefined;
-    if (selectedFile) {
-      try {
-        // 1단계: 업로드 직전 브라우저에서 축소·WebP 변환 (원본이 네트워크·S3를 타지 않게)
-        const uploadBlob = await compressImage(selectedFile);
-
-        // 2단계: 축소본 타입으로 presigned URL 발급
-        const urlResult = await getUploadUrlAction(uploadBlob.type);
-        if ('error' in urlResult) {
-          setServerError(urlResult.error);
-          return;
-        }
-
-        // 3단계: 발급받은 URL로 S3에 축소본 직접 업로드
-        const uploadResponse = await fetch(urlResult.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': uploadBlob.type },
-          body: uploadBlob
-        });
-        if (!uploadResponse.ok) throw new Error('upload failed');
-        imageUrl = urlResult.publicUrl;
-      } catch {
-        setServerError('이미지 업로드에 실패했어요. 다시 시도해 주세요.');
-        return;
-      }
-    }
-
-    // 4단계: (업로드했다면 URL 포함해) 코치 가입
-    const result = await coachRegisterAction({ ...data, imageUrl });
-    if (result?.error) {
-      setServerError(result.error);
-    }
-  });
+  // 코치 신청 핸들러 — 이미지가 있으면 mutate 내부에서 S3 업로드 후 URL을 담아 가입 요청
+  const onSubmit = handleSubmit(data => mutate({ ...data, selectedFile }));
 
   return (
     <form onSubmit={onSubmit} noValidate className="w-full">
-      {serverError ? (
+      {mutationResult?.error ? (
         <div role="alert" className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive">
-          {serverError}
+          {mutationResult.error}
         </div>
       ) : null}
 
@@ -119,7 +83,9 @@ export function CoachRegisterForm() {
           onClick={handlePickImage}
           aria-label="프로필 이미지 등록"
           className="group/upload relative rounded-full outline-none">
-          <Avatar size="lg" className="size-23 border border-dashed border-(--neutral-300) bg-(--neutral-50) transition-colors group-hover/upload:border-(--green-500)">
+          <Avatar
+            size="lg"
+            className="size-23 border border-dashed border-(--neutral-300) bg-(--neutral-50) transition-colors group-hover/upload:border-(--green-500)">
             <AvatarImage src={previewUrl ?? undefined} alt="프로필 미리보기" />
             <AvatarFallback className="bg-transparent text-(--neutral-400)">
               <Camera className="size-6" />
@@ -142,13 +108,7 @@ export function CoachRegisterForm() {
         <p className="text-xs text-(--neutral-400)">
           {previewUrl ? '학생에게 이렇게 보여져요' : '프로필 이미지 (선택)'}
         </p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleSelectImage}
-        />
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleSelectImage} />
       </div>
 
       <div className="flex flex-col gap-3.5">
@@ -200,7 +160,7 @@ export function CoachRegisterForm() {
           type="submit"
           variant="emphasis"
           size="lg"
-          loading={isSubmitting}
+          loading={isPending}
           leftIcon={<UserPlus className="size-4.5" />}
           className="w-full">
           코치 가입하기

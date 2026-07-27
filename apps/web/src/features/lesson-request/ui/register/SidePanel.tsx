@@ -3,12 +3,12 @@
 import { useWatch, type Control } from 'react-hook-form';
 import { Mic, Check } from 'lucide-react';
 import { WaveVisualizer } from '@/shared/ui/wave-visualizer/wave-visualizer';
-import type { LessonRegisterFormType } from '../../lesson-register.schema';
+import type { LessonRequestFormType } from '../../lesson-request.schema';
 
 const STEPS = ['지역 선택', '선호 장르', '레슨 목표'];
 
 interface SidePanelProps {
-  control: Control<LessonRegisterFormType>;
+  control: Control<LessonRequestFormType>;
 }
 
 export function SidePanel({ control }: SidePanelProps) {

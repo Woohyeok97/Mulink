@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Check, ArrowRight } from 'lucide-react';
-import { REGIONS, GENRES, type RegionValue, type GenreValue } from '../../lesson-register.schema';
+import { REGIONS, GENRES, type RegionValue, type GenreValue } from '../../lesson-request.schema';
 
 type SuccessViewProps = {
   region: RegionValue;
