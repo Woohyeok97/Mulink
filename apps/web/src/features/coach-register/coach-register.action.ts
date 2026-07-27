@@ -13,9 +13,7 @@ async function getAccessToken(): Promise<string | null> {
 }
 
 // 프로필 이미지 업로드용 presigned URL 발급 요청
-export async function getUploadUrlAction(
-  contentType: string,
-): Promise<{ uploadUrl: string; publicUrl: string } | { error: string }> {
+export async function getUploadUrlAction(contentType: string): Promise<{ uploadUrl: string; publicUrl: string } | { error: string }> {
   const accessToken = await getAccessToken();
   if (!accessToken) {
     return { error: '로그인이 필요합니다.' };

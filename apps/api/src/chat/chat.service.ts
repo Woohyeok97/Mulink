@@ -76,18 +76,24 @@ export class ChatService {
   }
 
   // 메시지 저장 (소켓 chat:send에서 호출) — 저장이 브로드캐스트보다 먼저 와야 유실 방지.
-  // clientMsgId로 upsert해 재전송(끊김 중 보낸 것의 재연결 시 재전송) 중복 저장을 막는다(멱등).
-  // 같은 (roomId, clientMsgId)면 기존 메시지를 그대로 반환 → 새 id로 또 저장되지 않음.
+  // sendMessageKey로 upsert해 재전송(끊김 중 보낸 것의 재연결 시 재전송) 중복 저장을 막는다(멱등).
+  // 같은 (roomId, sendMessageKey)면 기존 메시지를 그대로 반환 → 새 id로 또 저장되지 않음.
+  // (DB 컬럼명은 아직 clientMsgId — 마이그레이션은 나중에)
   async saveMessage(
     userId: string,
     roomId: string,
     content: string,
-    clientMsgId: string,
+    sendMessageKey: string,
   ) {
     await this.getRoomForParticipant(userId, roomId);
     return this.prisma.chatMessage.upsert({
-      where: { roomId_clientMsgId: { roomId, clientMsgId } },
-      create: { roomId, senderId: userId, content, clientMsgId },
+      where: { roomId_clientMsgId: { roomId, clientMsgId: sendMessageKey } },
+      create: {
+        roomId,
+        senderId: userId,
+        content,
+        clientMsgId: sendMessageKey,
+      },
       update: {}, // 이미 있으면 그대로 — 재전송이 와도 내용·id 불변
     });
   }

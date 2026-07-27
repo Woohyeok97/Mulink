@@ -11,8 +11,7 @@ export const getMyChatRooms = cache(async (): Promise<ChatRoomSummary[]> => {
 });
 
 // 방 초기 내역 (SSR). 접근 불가/오류면 빈 배열.
-export const getRoomMessages = cache(
-  async (roomId: string): Promise<ChatMessage[]> => {
+export const getRoomMessages = cache(async (roomId: string): Promise<ChatMessage[]> => {
     const response = await authedFetch(`/chat-rooms/${roomId}/messages`, {
       cache: 'no-store',
     });
