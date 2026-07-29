@@ -48,15 +48,30 @@ export default async function Home() {
             {/* 비로그인은 가입 없이 흐름을 둘러보는 체험으로, 로그인 상태면 역할에 맞는 실제 화면으로 */}
             {!loggedIn ? (
               <>
-                <Button variant="emphasis" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                <Button
+                  asChild
+                  variant="emphasis"
+                  size="lg"
+                  className="rounded-full max-sm:w-full"
+                  rightIcon={<ArrowRight />}>
                   <Link href="/demo/student">학생 체험해보기</Link>
                 </Button>
-                <Button variant="outline" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="rounded-full max-sm:w-full"
+                  rightIcon={<ArrowRight />}>
                   <Link href="/demo/coach">코치 체험해보기</Link>
                 </Button>
               </>
             ) : (
-              <Button variant="emphasis" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+              <Button
+                asChild
+                variant="emphasis"
+                size="lg"
+                className="rounded-full max-sm:w-full"
+                rightIcon={<ArrowRight />}>
                 {isCoach ? (
                   <Link href="/coach/lesson-requests">레슨 제안하기</Link>
                 ) : (
@@ -116,7 +131,7 @@ export default async function Home() {
                 </p>
               </div>
               <div className="justify-self-end max-md:justify-self-start max-sm:w-full">
-                <Button variant="emphasis" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                <Button asChild variant="emphasis" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
                   {loggedIn ? (
                     <Link href="/student/lesson-request/new">레슨 신청하기</Link>
                   ) : (
@@ -141,15 +156,15 @@ export default async function Home() {
             <div className="justify-self-end max-md:justify-self-start max-sm:w-full">
               {/* 비로그인 → 로그인 / 코치 → 신청 목록 / 학생 → 코치 가입 */}
               {!loggedIn ? (
-                <Button variant="outline" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                <Button asChild variant="outline" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
                   <Link href="/login">로그인하고 시작하기</Link>
                 </Button>
               ) : isCoach ? (
-                <Button variant="outline" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                <Button asChild variant="outline" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
                   <Link href="/coach/lesson-requests">레슨 신청 목록 보기</Link>
                 </Button>
               ) : (
-                <Button variant="outline" className="rounded-full max-sm:w-full" leftIcon={<UserPlus />}>
+                <Button asChild variant="outline" className="rounded-full max-sm:w-full" leftIcon={<UserPlus />}>
                   <Link href="/coach-register">코치로 가입하기</Link>
                 </Button>
               )}

@@ -37,7 +37,7 @@ export function DemoProposalSentDialog({ open, onClose }: DemoProposalSentDialog
             <Button variant="outline" size="default" onClick={onClose}>
               목록으로
             </Button>
-            <Button variant="emphasis" size="default">
+            <Button asChild variant="emphasis" size="default">
               <Link href="/demo/coach/chat">채팅하러 가기</Link>
             </Button>
           </div>

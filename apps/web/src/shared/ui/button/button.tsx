@@ -70,7 +70,7 @@ function Button({
       ) : (
         leftIcon && <span className="inline-flex items-center">{leftIcon}</span>
       )}
-      {children && <span>{children}</span>}
+      {children && <Slot.Slottable>{asChild ? children : <span>{children}</span>}</Slot.Slottable>}
       {!loading && rightIcon && <span className="inline-flex items-center">{rightIcon}</span>}
     </Comp>
   );
