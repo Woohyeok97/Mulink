@@ -111,7 +111,7 @@ export function DemoChatRoomView({ backHref, partner, initialMessages, replies }
         className="flex shrink-0 items-center gap-2.5 border-t border-(--neutral-100) px-4.5 py-3.5 max-[640px]:px-3.5">
         <input
           ref={inputRef}
-          className="flex-1 rounded-full border-[1.5px] border-(--neutral-200) bg-(--neutral-50) px-4.5 py-2.75 text-sm outline-none transition-colors focus:border-(--green-400) focus:bg-white"
+          className="flex-1 rounded-full border-[1.5px] border-(--neutral-200) bg-(--neutral-50) px-4.5 py-2.75 text-base outline-none transition-colors focus:border-(--green-400) focus:bg-white sm:text-sm"
           placeholder="메시지를 입력하세요"
         />
         <button

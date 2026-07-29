@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 // components
 import { MapPin, Music, Send, Check, X, Clock } from 'lucide-react';
 import { Button } from '@/shared/ui/button/button';
@@ -36,15 +36,23 @@ export function LessonRequestList({ requests }: { requests: OpenLessonRequest[] 
 function LessonRequestRow({ request }: { request: OpenLessonRequest }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isProposed = request.myProposal !== null;
+  const rowRef = useRef<HTMLDivElement>(null);
 
-  // 펼침 토글 핸들러
-  const toggleExpanded = () => setIsExpanded(prev => !prev);
+  // 펼침 토글 핸들러 — 펼칠 때는 카드가 화면 중앙에 오도록 스크롤
+  const toggleExpanded = () => {
+    setIsExpanded(prev => {
+      const next = !prev;
+      if (next) requestAnimationFrame(() => rowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      return next;
+    });
+  };
 
   // 펼침 영역을 닫는다 (전송·취소 성공 후 부모가 호출)
   const closeExpanded = () => setIsExpanded(false);
 
   return (
     <div
+      ref={rowRef}
       className={`overflow-hidden rounded-2xl border bg-white transition-colors ${
         isExpanded ? 'border-(--green-200)' : 'border-(--neutral-200)'
       }`}>

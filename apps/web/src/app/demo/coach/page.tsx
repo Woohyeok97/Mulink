@@ -27,7 +27,7 @@ export default function DemoCoachRegisterPage() {
         className="pointer-events-none absolute bottom-[-8%] left-[-10%] h-90 w-90 rounded-full bg-(--green-300) opacity-40 blur-[72px]"
       />
 
-      <div className="relative z-10 flex w-full max-w-100 flex-col items-center sm:rounded-2xl sm:border sm:border-white/60 sm:bg-white/[0.82] sm:px-12 sm:py-14 sm:shadow-(--shadow-xl) sm:backdrop-blur-[16px]">
+      <div className="relative z-10 flex w-full max-w-100 flex-col items-center sm:rounded-2xl sm:border sm:border-white/60 sm:bg-white/82 sm:px-12 sm:py-14 sm:shadow-(--shadow-xl) sm:backdrop-blur-lg">
         <div className="mb-12 flex items-center gap-2">
           <Mic className="size-7 stroke-2 text-(--green-700)" />
           <span className="text-xl font-extrabold leading-none tracking-tight text-(--green-800)">MU:LINK</span>
