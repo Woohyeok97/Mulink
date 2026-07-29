@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/shared/lib/supabase/server';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get('code'); // 임시용 세션 코드를 쿼리 파라미터에서 추출
+
+  // 되돌아갈 주소는 프록시가 붙인 헤더에서 구한다.
+  // Amplify는 CloudFront 뒤 내부 서버(localhost:3000)에서 돌아 request.url이 공개 주소가 아니다.
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const origin = forwardedHost
+    ? `${request.headers.get('x-forwarded-proto') ?? 'https'}://${forwardedHost}`
+    : new URL(request.url).origin;
 
   if (code) {
     // 1) 세션 코드로 NestJS에서 세션 토큰을 받아옴 (서버 ↔ 서버)
