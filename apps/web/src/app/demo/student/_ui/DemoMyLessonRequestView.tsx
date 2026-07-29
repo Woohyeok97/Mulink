@@ -61,11 +61,6 @@ export function DemoMyLessonRequestView() {
             </Badge>
           </div>
 
-          {/* 다음 행동 안내 — 프로필 보기가 채팅으로 이어진다는 걸 알려준다 */}
-          <p className="mb-4 rounded-[10px] bg-(--green-50) px-4 py-3 text-sm text-(--green-800)">
-            마음에 드는 코치의 <span className="font-bold">프로필 보기</span>를 눌러 상세를 확인하고 채팅을 시작해보세요.
-          </p>
-
           <ul className="flex flex-col gap-4">
             {proposals.map(offer => (
               <li key={offer.id}>

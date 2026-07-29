@@ -7,22 +7,25 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar/avatar';
 import { MessageBubble } from '@/features/chat/ui/MessageBubble';
 import type { ChatMessage } from '@/entities/chat/chat.type';
 // demo
-import {
-  DEMO_CHAT_PARTNER,
-  DEMO_COACH_ID,
-  DEMO_INITIAL_MESSAGES,
-  DEMO_ME_ID,
-  DEMO_REPLIES
-} from '../_lib/demo-fixtures';
+import { DEMO_ME_ID, DEMO_PARTNER_ID } from '../_lib/demo-ids';
 import { DemoSignupDialog } from './DemoSignupDialog';
 
-// 코치 답장이 도착하기까지의 지연 — 실제로 상대가 입력하는 듯한 간격
-const REPLY_DELAY_MS = 1200;
+// 상대 답장이 도착하기까지의 지연 — 실제로 입력하는 듯한 간격
+const REPLY_DELAY_MS = 800;
 // 마지막 답장을 읽을 틈을 준 뒤 가입 모달을 띄우기까지의 지연
 const SIGNUP_DELAY_MS = 800;
 
-export function DemoChatRoomView() {
-  const [messages, setMessages] = useState<ChatMessage[]>(DEMO_INITIAL_MESSAGES);
+interface DemoChatRoomViewProps {
+  backHref: string;
+  partner: { name: string; imageUrl: string };
+  initialMessages: ChatMessage[];
+  // 내가 메시지를 보낼 때마다 순서대로 하나씩 나가는 상대의 답장
+  replies: string[];
+}
+
+// 학생·코치 데모가 함께 쓰는 채팅 화면. 상대와 대사만 다르므로 props로 받는다.
+export function DemoChatRoomView({ backHref, partner, initialMessages, replies }: DemoChatRoomViewProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [typing, setTyping] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -54,18 +57,17 @@ export function DemoChatRoomView() {
     setMessages(prev => [...prev, createMessage(DEMO_ME_ID, value)]);
 
     // 준비된 답장을 다 썼으면 더 응답하지 않는다
-    const reply = DEMO_REPLIES[replyIndex.current];
+    const reply = replies[replyIndex.current];
     if (!reply) return;
 
-    const isLastReply = replyIndex.current === DEMO_REPLIES.length - 1;
+    const isLastReply = replyIndex.current === replies.length - 1;
     replyIndex.current += 1;
 
     setTyping(true);
     timers.current.push(
       setTimeout(() => {
-        console.log('time!');
         setTyping(false);
-        setMessages(prev => [...prev, createMessage(DEMO_COACH_ID, reply)]);
+        setMessages(prev => [...prev, createMessage(DEMO_PARTNER_ID, reply)]);
         // 마지막 답장까지 나갔으면 체험을 마무리하며 가입을 안내한다
         if (isLastReply) timers.current.push(setTimeout(() => setSignupOpen(true), SIGNUP_DELAY_MS));
       }, REPLY_DELAY_MS)
@@ -77,16 +79,16 @@ export function DemoChatRoomView() {
       {/* 헤더 — 뒤로가기 + 상대 프로필 */}
       <div className="flex shrink-0 items-center gap-3 border-b border-(--neutral-100) px-5 py-3 max-[640px]:px-3.5">
         <Link
-          href="/demo/student/lesson-request"
-          aria-label="제안 목록으로"
+          href={backHref}
+          aria-label="이전으로"
           className="flex size-9 items-center justify-center rounded-full text-(--neutral-600) transition-colors hover:bg-(--neutral-100)">
           <ChevronLeft className="size-5" />
         </Link>
         <Avatar size="sm">
-          <AvatarImage src={DEMO_CHAT_PARTNER.imageUrl} alt={DEMO_CHAT_PARTNER.name} />
-          <AvatarFallback>{DEMO_CHAT_PARTNER.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={partner.imageUrl} alt={partner.name} />
+          <AvatarFallback>{partner.name.charAt(0)}</AvatarFallback>
         </Avatar>
-        <p className="truncate text-[15px] font-bold text-(--neutral-900)">{DEMO_CHAT_PARTNER.name}</p>
+        <p className="truncate text-[15px] font-bold text-(--neutral-900)">{partner.name}</p>
       </div>
 
       {/* 메시지 영역 */}
@@ -125,7 +127,7 @@ export function DemoChatRoomView() {
   );
 }
 
-// 코치가 답장을 준비하는 동안 보여주는 말풍선
+// 상대가 답장을 준비하는 동안 보여주는 말풍선
 function TypingBubble() {
   return (
     <div className="flex justify-start">

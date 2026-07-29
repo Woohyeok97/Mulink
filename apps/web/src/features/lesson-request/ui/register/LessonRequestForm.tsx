@@ -65,7 +65,7 @@ export function LessonRequestForm() {
                 LESSON APPLY
               </span>
               <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight text-(--green-800)">신청서 작성</h1>
-              <p className="text-sm text-(--neutral-500)">3분이면 충분해요. 아래 항목을 입력해 주세요.</p>
+              <p className="text-sm text-(--neutral-500)">1분이면 충분해요. 아래 항목을 입력해 주세요.</p>
             </div>
 
             <div className="flex flex-col gap-6">

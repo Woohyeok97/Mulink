@@ -62,7 +62,7 @@ export function DemoLessonRequestForm() {
                 LESSON APPLY
               </span>
               <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight text-(--green-800)">신청서 작성</h1>
-              <p className="text-sm text-(--neutral-500)">예시로 채워뒀어요. 원하는 대로 바꿔보셔도 좋아요.</p>
+              <p className="text-sm text-(--neutral-500)">1분이면 충분해요. 아래 항목을 입력해 주세요.</p>
             </div>
 
             <div className="flex flex-col gap-6">
@@ -175,13 +175,9 @@ function DemoSuccessView({ values, onNext }: { values: LessonRequestFormType; on
         <SummaryRow label="선호 장르" value={genreLabel} />
       </div>
 
-      <button
-        type="button"
-        onClick={onNext}
-        className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-(--green-700) hover:text-(--green-800)">
+      <Button type="button" variant="emphasis" size="lg" onClick={onNext} className="self-start rounded-full">
         현황 보러가기
-        <ArrowRight className="size-4" />
-      </button>
+      </Button>
     </div>
   );
 }

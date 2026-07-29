@@ -47,9 +47,14 @@ export default async function Home() {
           <div className="mt-7.5 flex w-full justify-center gap-3 max-sm:flex-col max-sm:items-stretch">
             {/* 비로그인은 가입 없이 흐름을 둘러보는 체험으로, 로그인 상태면 역할에 맞는 실제 화면으로 */}
             {!loggedIn ? (
-              <Button variant="emphasis" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
-                <Link href="/demo/student">학생 체험해보기</Link>
-              </Button>
+              <>
+                <Button variant="emphasis" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                  <Link href="/demo/student">학생 체험해보기</Link>
+                </Button>
+                <Button variant="outline" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
+                  <Link href="/demo/coach">코치 체험해보기</Link>
+                </Button>
+              </>
             ) : (
               <Button variant="emphasis" size="lg" className="rounded-full max-sm:w-full" rightIcon={<ArrowRight />}>
                 {isCoach ? (
