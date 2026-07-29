@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 // components
@@ -82,12 +82,20 @@ interface LessonRequestRowProps {
 function LessonRequestRow({ request, myProposal, onSend, onCancel }: LessonRequestRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isProposed = myProposal !== null;
+  const rowRef = useRef<HTMLDivElement>(null);
 
-  // 펼침 토글 핸들러
-  const toggleExpanded = () => setIsExpanded(prev => !prev);
+  // 펼침 토글 핸들러 — 펼칠 때는 카드가 화면 중앙에 오도록 스크롤
+  const toggleExpanded = () => {
+    setIsExpanded(prev => {
+      const next = !prev;
+      if (next) requestAnimationFrame(() => rowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      return next;
+    });
+  };
 
   return (
     <div
+      ref={rowRef}
       className={`overflow-hidden rounded-2xl border bg-white transition-colors ${
         isExpanded ? 'border-(--green-200)' : 'border-(--neutral-200)'
       }`}>
@@ -199,7 +207,6 @@ function ProposalForm({ studentNickname, onSend, onCancel }: ProposalFormProps) 
         {studentNickname}님께 한마디
       </div>
       <Textarea
-        autoFocus
         rows={3}
         className="bg-white"
         placeholder="학생에게 전할 한마디를 적어 주세요."

@@ -56,7 +56,6 @@ export function ProposalForm({ requestId, studentNickname, onSent, onCancel }: P
         {studentNickname}님께 한마디
       </div>
       <Textarea
-        autoFocus
         rows={3}
         className="bg-white"
         placeholder="학생에게 전할 한마디를 적어 주세요."
