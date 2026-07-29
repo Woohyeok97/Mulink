@@ -32,7 +32,7 @@ export function SuccessView({ region, genre }: SuccessViewProps) {
         <SummaryRow label="선호 장르" value={genreLabel} />
       </div>
 
-      <Button variant="emphasis" size="lg" className="self-start rounded-full">
+      <Button asChild variant="emphasis" size="lg" className="self-start rounded-full">
         <Link href="/student/lesson-request">현황 보러가기</Link>
       </Button>
     </div>
