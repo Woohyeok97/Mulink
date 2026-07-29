@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, useController } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 // components
@@ -10,23 +11,21 @@ import { Input } from '@/shared/ui/input/input';
 import { Button } from '@/shared/ui/button/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select/select';
 // schemas
-import { CoachRegisterSchema, REGIONS, type CoachRegisterFormType } from '../coach-register.schema';
-// mutations
-import { useCoachRegisterMutation } from '../coach-register.mutate';
+import { CoachRegisterSchema, REGIONS, type CoachRegisterFormType } from '@/features/coach-register/coach-register.schema';
+// demo
+import { DEFAULT_COACH_VALUES } from '../_lib/demo-fixtures';
 
-export function CoachRegisterForm() {
-  // 선택한 이미지 파일 — 실제 S3 업로드는 가입 제출 시에 한다 (선택만 하고 이탈 시 고아 객체 방지)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+// 프로덕션 CoachRegisterForm의 데모판.
+// 폼 UI는 같고, 제출이 S3 업로드·가입 요청 대신 신청 목록으로의 이동이 된다.
+export function DemoCoachRegisterForm() {
+  const router = useRouter();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, control, handleSubmit, formState } = useForm<CoachRegisterFormType>({
     resolver: zodResolver(CoachRegisterSchema),
-    defaultValues: {
-      activityName: '',
-      region: undefined,
-      imageUrl: undefined
-    }
+    // 체험자가 바로 제출해볼 수 있도록 미리 채워둔다(수정 가능)
+    defaultValues: DEFAULT_COACH_VALUES
   });
 
   // 폼 상태
@@ -38,12 +37,11 @@ export function CoachRegisterForm() {
   // 파일 선택창 열기 핸들러
   const handlePickImage = () => fileInputRef.current?.click();
 
-  // 파일 선택 핸들러 — 로컬 미리보기만 만들고 업로드는 하지 않는다
+  // 파일 선택 핸들러 — 데모에서는 미리보기만 만들고 업로드하지 않는다
   const handleSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setSelectedFile(file);
     // 이전 미리보기 blob URL 해제 후 새로 생성
     setPreviewUrl(prev => {
       if (prev) URL.revokeObjectURL(prev);
@@ -54,7 +52,6 @@ export function CoachRegisterForm() {
   // 이미지 제거 핸들러
   const handleRemoveImage = (event: React.MouseEvent) => {
     event.stopPropagation();
-    setSelectedFile(null);
     setPreviewUrl(prev => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
@@ -62,20 +59,11 @@ export function CoachRegisterForm() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 코치 가입 mutate
-  const { mutate, isPending, data: mutationResult } = useCoachRegisterMutation();
-
-  // 코치 신청 핸들러 — 이미지가 있으면 mutate 내부에서 S3 업로드 후 URL을 담아 가입 요청
-  const onSubmit = handleSubmit(data => mutate({ ...data, selectedFile }));
+  // 코치 가입 핸들러 — 저장 없이 신청 목록으로 넘어간다
+  const onSubmit = handleSubmit(() => router.push('/demo/coach/lesson-requests'));
 
   return (
     <form onSubmit={onSubmit} noValidate className="w-full">
-      {mutationResult?.error ? (
-        <div role="alert" className="mb-5 rounded-md bg-(--danger-100) px-4 py-3 text-sm text-destructive">
-          {mutationResult.error}
-        </div>
-      ) : null}
-
       {/* 프로필 이미지 업로드 (선택) */}
       <div className="mb-6 flex flex-col items-center gap-2">
         <button
@@ -160,7 +148,6 @@ export function CoachRegisterForm() {
           type="submit"
           variant="emphasis"
           size="lg"
-          loading={isPending}
           leftIcon={<UserPlus className="size-4.5" />}
           className="w-full">
           코치 가입하기

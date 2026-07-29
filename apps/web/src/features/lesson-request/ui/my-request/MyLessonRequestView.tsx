@@ -12,8 +12,8 @@ import { LessonProposalCard } from './LessonProposalCard';
 import { Clock, Users } from 'lucide-react';
 // types
 import { type LessonProposal, type LessonRequest } from '@/entities/lesson-request/lesson-request.type';
-// actions
-import { deleteLessonRequestAction } from '../../lesson-request.action';
+// mutations
+import { useDeleteLessonRequestMutation } from '../../lesson-request.mutate';
 
 interface MyLessonRequestViewProps {
   lessonRequest: LessonRequest;
@@ -24,7 +24,6 @@ export function MyLessonRequestView({ lessonRequest }: MyLessonRequestViewProps)
   const router = useRouter();
   const [selectedProposal, setSelectedProposal] = useState<LessonProposal | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleViewProfile = (offer: LessonProposal) => {
     setSelectedProposal(offer);
@@ -34,18 +33,20 @@ export function MyLessonRequestView({ lessonRequest }: MyLessonRequestViewProps)
     setSelectedProposal(null);
   };
 
-  // 레슨 신청 취소 핸들러
-  const handleDeleteConfirm = async () => {
-    setIsDeleting(true);
-    const result = await deleteLessonRequestAction(lessonRequest.id);
-    if (result?.error) {
-      alert(result.error);
-      setIsDeleting(false);
-      return;
+  // 레슨 신청 취소 mutate
+  const { mutate, isPending } = useDeleteLessonRequestMutation({
+    onSuccess: result => {
+      if (result?.error) {
+        alert(result.error);
+        return;
+      }
+      setDeleteDialogOpen(false);
+      router.refresh();
     }
-    setDeleteDialogOpen(false);
-    router.refresh();
-  };
+  });
+
+  // 레슨 신청 취소 핸들러
+  const handleDeleteConfirm = () => mutate(lessonRequest.id);
 
   return (
     <div className="mx-auto max-w-300 px-8 py-9">
@@ -106,7 +107,7 @@ export function MyLessonRequestView({ lessonRequest }: MyLessonRequestViewProps)
         open={deleteDialogOpen}
         onConfirm={handleDeleteConfirm}
         onClose={() => setDeleteDialogOpen(false)}
-        isDeleting={isDeleting}
+        isDeleting={isPending}
       />
     </div>
   );

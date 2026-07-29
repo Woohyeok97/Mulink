@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 // components
 import { Sparkles, X } from 'lucide-react';
 import { Button } from '@/shared/ui/button/button';
 // types
 import type { MyProposal } from '@/entities/lesson-request/lesson-request.type';
-// actions
-import { deleteLessonProposalAction } from '../lesson-proposal.action';
+// mutations
+import { useDeleteLessonProposalMutation } from '../lesson-proposal.mutate';
 // utils
 import { toAbsoluteTime } from '@/shared/lib/absolute-time';
 
@@ -20,20 +19,21 @@ interface ProposalDetailProps {
 // 이미 보낸 제안의 한마디·발송 시각을 보여주고, 취소할 수 있는 상세 영역
 export function ProposalDetail({ proposal, onCancelled }: ProposalDetailProps) {
   const router = useRouter();
-  const [isCancelling, setIsCancelling] = useState(false);
+
+  // 레슨 제안 취소 mutate
+  const { mutate, isPending } = useDeleteLessonProposalMutation({
+    onSuccess: result => {
+      if (result?.error) {
+        alert(result.error);
+        return;
+      }
+      onCancelled();
+      router.refresh(); // 서버 목록 재검증 → 다시 '제안 가능' 상태로
+    }
+  });
 
   // 제안 취소 핸들러 (확인 없이 즉시 취소)
-  const handleCancelProposal = async () => {
-    setIsCancelling(true);
-    const result = await deleteLessonProposalAction(proposal.id);
-    if (result?.error) {
-      alert(result.error);
-      setIsCancelling(false);
-      return;
-    }
-    onCancelled();
-    router.refresh(); // 서버 목록 재검증 → 다시 '제안 가능' 상태로
-  };
+  const handleCancelProposal = () => mutate(proposal.id);
 
   return (
     <div className="animate-in fade-in-0 slide-in-from-top-2 duration-200 border-t border-(--neutral-100) bg-(--green-50) px-5 py-4">
@@ -49,7 +49,7 @@ export function ProposalDetail({ proposal, onCancelled }: ProposalDetailProps) {
         <Button
           size="sm"
           variant="destructive"
-          loading={isCancelling}
+          loading={isPending}
           onClick={handleCancelProposal}
           leftIcon={<X size={13} />}>
           레슨 제안 취소

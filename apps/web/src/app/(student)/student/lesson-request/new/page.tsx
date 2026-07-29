@@ -1,9 +1,9 @@
-import { LessonRegisterForm } from '@/features/lesson-request/ui/register/LessonRegisterForm';
+import { LessonRequestForm } from '@/features/lesson-request/ui/register/LessonRequestForm';
 
-export default function LessonRegisterPage() {
+export default function LessonRequestPage() {
   return (
     <div className="flex flex-1 flex-col">
-      <LessonRegisterForm />
+      <LessonRequestForm />
     </div>
   );
 }

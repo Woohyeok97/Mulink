@@ -34,8 +34,10 @@ export function ChatRoomView({ roomId, myId, partner, initialMessages }: ChatRoo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, roomId]);
 
-  // 전송 핸들러 — 공백 무시
-  const handleSendMessage = () => {
+  // 전송 핸들러 — 공백 무시.
+  // form submit으로 받으면 한글 조합 중 Enter가 전송으로 새지 않는다(keydown은 샌다).
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
     const value = inputRef.current?.value.trim();
     if (!value) return;
     sendMessage(roomId, value);
@@ -90,22 +92,21 @@ export function ChatRoomView({ roomId, myId, partner, initialMessages }: ChatRoo
       )}
 
       {/* 입력창 */}
-      <div className="flex shrink-0 items-center gap-2.5 border-t border-(--neutral-100) px-4.5 py-3.5 max-[640px]:px-3.5">
+      <form
+        onSubmit={handleSendMessage}
+        className="flex shrink-0 items-center gap-2.5 border-t border-(--neutral-100) px-4.5 py-3.5 max-[640px]:px-3.5">
         <input
           ref={inputRef}
           className="flex-1 rounded-full border-[1.5px] border-(--neutral-200) bg-(--neutral-50) px-4.5 py-2.75 text-sm outline-none transition-colors focus:border-(--green-400) focus:bg-white"
           placeholder="메시지를 입력하세요"
-          onKeyDown={e => {
-            if (e.key === 'Enter') handleSendMessage();
-          }}
         />
         <button
+          type="submit"
           aria-label="전송"
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--green-800) text-white transition-colors hover:bg-(--green-700)"
-          onClick={handleSendMessage}>
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--green-800) text-white transition-colors hover:bg-(--green-700)">
           <Send className="size-4.5" />
         </button>
-      </div>
+      </form>
     </div>
   );
 }
