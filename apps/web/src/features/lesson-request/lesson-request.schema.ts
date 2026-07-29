@@ -30,7 +30,7 @@ export type GenreValue = (typeof GENRES)[number]['value'];
 const genreValues = GENRES.map((genre) => genre.value) as [GenreValue, ...GenreValue[]];
 
 // 레슨 신청 폼 스키마
-export const LessonRegisterSchema = z.object({
+export const LessonRequestSchema = z.object({
   region: z.enum(regionValues, {
     error: '지역을 선택해 주세요.',
   }),
@@ -41,4 +41,4 @@ export const LessonRegisterSchema = z.object({
 });
 
 // 레슨 신청 폼 타입
-export type LessonRegisterFormType = z.infer<typeof LessonRegisterSchema>;
+export type LessonRequestFormType = z.infer<typeof LessonRequestSchema>;

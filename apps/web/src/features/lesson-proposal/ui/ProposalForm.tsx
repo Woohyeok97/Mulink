@@ -9,8 +9,8 @@ import { Button } from '@/shared/ui/button/button';
 import { Textarea } from '@/shared/ui/textarea/textarea';
 // schema
 import { LessonProposalSchema, type LessonProposalFormType } from '../lesson-proposal.schema';
-// actions
-import { createLessonProposalAction } from '../lesson-proposal.action';
+// mutations
+import { useCreateLessonProposalMutation } from '../lesson-proposal.mutate';
 
 interface ProposalFormProps {
   requestId: string;
@@ -29,18 +29,22 @@ export function ProposalForm({ requestId, studentNickname, onSent, onCancel }: P
   });
 
   // 폼 상태
-  const { errors, isSubmitting } = formState;
+  const { errors } = formState;
+
+  // 레슨 제안 전송 mutate
+  const { mutate, isPending } = useCreateLessonProposalMutation({
+    onSuccess: result => {
+      if (result?.error) {
+        alert(result.error);
+        return;
+      }
+      onSent();
+      router.refresh(); // 서버 목록 재검증 → myProposal 갱신
+    }
+  });
 
   // 제안 전송 핸들러
-  const handleSendProposal = handleSubmit(async ({ message }) => {
-    const result = await createLessonProposalAction(requestId, message);
-    if (result?.error) {
-      alert(result.error);
-      return;
-    }
-    onSent();
-    router.refresh(); // 서버 목록 재검증 → myProposal 갱신
-  });
+  const handleSendProposal = handleSubmit(({ message }) => mutate({ requestId, message }));
 
   return (
     <form
@@ -68,7 +72,7 @@ export function ProposalForm({ requestId, studentNickname, onSent, onCancel }: P
         <Button type="button" size="sm" variant="outline" onClick={onCancel}>
           취소
         </Button>
-        <Button type="submit" size="sm" loading={isSubmitting} leftIcon={<Send size={13} />}>
+        <Button type="submit" size="sm" loading={isPending} leftIcon={<Send size={13} />}>
           제안 전송
         </Button>
       </div>

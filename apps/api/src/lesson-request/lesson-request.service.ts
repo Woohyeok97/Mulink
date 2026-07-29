@@ -52,6 +52,7 @@ export class LessonRequestService {
             id: true,
             message: true,
             createdAt: true,
+            chatRoom: { select: { id: true } }, // 이 제안으로 열린 방(있으면)
             coach: {
               select: {
                 coachProfile: {
@@ -73,6 +74,7 @@ export class LessonRequestService {
         message: proposal.message,
         createdAt: proposal.createdAt,
         coachProfile: proposal.coach.coachProfile, // { activityName, region }
+        roomId: proposal.chatRoom?.id ?? null, // 방 있으면 그 id, 없으면 null
       })),
     };
   }

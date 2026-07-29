@@ -49,6 +49,7 @@ export type LessonProposal = {
   id: string;
   message: string;
   createdAt: string;
+  roomId: string | null; // 이 코치와의 채팅방 있으면 그 id, 없으면 null
   coachProfile: {
     activityName: string;
     imageUrl: string | null;

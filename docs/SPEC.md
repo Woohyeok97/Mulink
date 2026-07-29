@@ -49,7 +49,7 @@ pnpm --filter=@mulink/api exec prisma migrate dev --name <변경명>   # 개발:
 pnpm --filter=@mulink/api exec prisma db push                       # 프로토타이핑: 마이그레이션 없이 스키마만 밀어넣기
 ```
 
-### 엔티티 4개
+### 엔티티 6개
 
 **User (유저)** — 기획: 카카오 로그인 / 온보딩
 - 카카오로 가입한 모든 사용자. `role`(STUDENT / COACH / ADMIN)로 역할 구분.
@@ -74,6 +74,22 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 - **`@@unique([requestId, coachId])`** — 1레슨 신청 1레슨 제안 규칙 (같은 코치가 같은 신청에 중복 제안 불가)
 - LessonRequest 삭제 시 cascade (기획: 신청 삭제 시 제안 함께 삭제)
 - 코치 프로필(활동명·지역)은 제안에 담지 않는다. `coachId`로 User→CoachProfile을 조회해 붙인다. (조회는 `GET /lesson-requests/me` 응답에 nested로 녹인다 — 4장 참고)
+
+**ChatRoom (채팅방)** — 기획: 채팅 목록 / 채팅방 페이지 *(신규 추가 필요)*
+- 학생이 특정 레슨 제안에서 "채팅하기"를 눌렀을 때 생성되는 1:1 방. 한 제안(학생-코치 쌍)당 방 1개.
+- 주요 필드: `proposalId`(FK → LessonProposal, **unique**), `studentId`(FK → User, `@db.Uuid`), `coachId`(FK → User, `@db.Uuid`), `studentLastReadMessageId`(`Int?`), `coachLastReadMessageId`(`Int?`), `createdAt`
+- **`proposalId`는 unique** — "1제안 1방"을 DB 제약으로 보장 (기존 `LessonRequest.studentId @unique` 패턴과 동일 근거: 앱 레벨 체크만으로는 동시 요청에 뚫린다).
+- LessonProposal 삭제 시 cascade. 기획상 방 삭제 트리거(제안 취소·신청 삭제·코치 전환)는 모두 제안이 지워지는 경로라 이 cascade 체인으로 정리된다. (코치 전환은 `POST /coach-profiles` 트랜잭션이 그 유저의 LessonRequest→LessonProposal을 지우므로 방도 함께 삭제됨 — 구현 시 실제 삭제 순서 확인 필요)
+- **읽음 추적은 방에 두 컬럼(`studentLastReadMessageId`·`coachLastReadMessageId`)으로 둔다.** 참여자가 방당 2명으로 고정이라 별도 조인 테이블(ChatRoomParticipant)은 만들지 않는다. 안 읽은 개수는 `id > 내 lastRead AND senderId != 나`로 집계한다.
+- `@@index([studentId])`, `@@index([coachId])` (내 채팅 목록 조회용)
+
+**ChatMessage (채팅 메시지)** — 기획: 채팅방 페이지 *(신규 추가 필요)*
+- 방에 오간 개별 메시지. 텍스트 전용(MVP).
+- 주요 필드: `id`(**`Int @id @default(autoincrement())`**), `roomId`(FK → ChatRoom), `senderId`(FK → User, `@db.Uuid`), `content`(텍스트), `createdAt`
+- **`id`가 자동증가 정수인 것은 이 스키마에서 유일한 예외다** (다른 도메인 모델은 `cuid()`). 이유: 재연결 후 유실 복구 시 "이 ID 이후 메시지"(`?after=<id>`)를 단조증가 정수로 단순 조회(`WHERE id > ?`)하기 위함 — 8장 참고. **이 예외를 스키마 주석에도 남긴다.**
+- ChatRoom 삭제 시 cascade.
+- `@@index([roomId, id])` — 방별 메시지를 id 순으로 훑는 내역 조회·재동기화의 핵심 인덱스.
+- `studentLastReadMessageId` 등은 `ChatMessage.id`를 가리키지만 **FK 제약은 걸지 않고 단순 Int 커서로 둔다** (읽은 메시지가 지워져도 커서 값만 남으면 됨).
 
 > 필드 필수 여부·글자 수 제한 등 상세 제약은 구현 시 DTO(zod/class-validator)에서 확정한다. enum 값의 실제 목록은 아래 enum 절 참고.
 
@@ -155,6 +171,22 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 | DELETE | `/lesson-proposals/:id` | 제안 취소 *(미구현 — 신규 추가 필요)* |
 
 
+### 채팅 — `chat` 모듈 *(신규 추가 필요)*
+
+REST는 **방 생성·초기 내역·재동기화**만 담당하고, 실시간 메시지 송수신·읽음은 WebSocket이 맡는다(8장). `app.module.ts` imports에 `ChatModule` 등록.
+
+| 메서드 | 경로 | 설명 |
+|:---|:---|:---|
+| POST | `/chat-rooms` | 채팅방 생성/취득 (학생만). body `{ proposalId }`. 이미 있으면 기존 방 반환(멱등) |
+| GET | `/chat-rooms` | 내 채팅방 목록 (학생·코치 공용, `/chat` 화면용) |
+| GET | `/chat-rooms/:id/messages` | 방 초기 내역 (최근 N건) |
+| GET | `/chat-rooms/:id/messages?after=:messageId` | **재동기화** — 해당 id 초과 메시지만 (8장 핵심) |
+
+- 컨트롤러는 기존 패턴대로 `@UseGuards(SupabaseAuthGuard)`를 컨트롤러 레벨에 붙이고(`lesson-proposal.controller.ts` 참고), 서비스는 `PrismaService` 주입 후 참여자(`studentId`/`coachId`) 대조로 접근 검증한다.
+- 방 생성 "1개만"은 `proposalId @unique` + 서비스에서 `P2002` catch로 처리하되, 멱등 취득이므로 예외 대신 **기존 방을 조회해 반환**한다.
+- `GET /chat-rooms`(목록)와 `GET /lesson-requests/me`(학생 내 신청)는 기존처럼 **화면 지향 엔드포인트**다. 목록 각 항목에 상대 표시정보(`partner`)·마지막 메시지(`lastMessage`)·안 읽은 수(`unreadCount`)를 nested로 녹인다.
+
+
 ### 규칙
 
 - 모델 있는 모듈은 **모델명 = 모듈명 = URL** 을 일치시킨다.
@@ -169,7 +201,8 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
     "proposals": [                              // 최신순 정렬, 없으면 []
       {
         "id": "...", "message": "...", "createdAt": "...",
-        "coachProfile": { "activityName": "...", "region": "SEOUL", "imageUrl": "https://<버킷>.s3.<리전>.amazonaws.com/..." }   // CoachProfile nested, imageUrl은 미등록 시 null
+        "coachProfile": { "activityName": "...", "region": "SEOUL", "imageUrl": "https://<버킷>.s3.<리전>.amazonaws.com/..." },  // CoachProfile nested, imageUrl은 미등록 시 null
+        "roomId": "room_..." | null             // 이 코치와의 채팅방이 이미 있으면 그 id, 없으면 null → 프론트는 "채팅 계속하기"/"채팅하기" 버튼을 구분해 표시
       }
     ]
   }
@@ -204,6 +237,21 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 - `auth` 모듈: 인증 "과정"만 유지 (kakao-auth, session 컨트롤러 + 관련 서비스, `SupabaseAuthGuard`, `SupabaseService`)
 - `user` 모듈 신설: 유저 리소스(`POST /users`, `GET /users/me`)를 옮긴다. 기존 `auth.service`의 `upsertUser`/`getMe` 로직도 `user.service`로 이동.
 
+### WebSocket 게이트웨이 (채팅 실시간) *(신규 추가 필요)*
+
+실시간 메시지 송수신·읽음은 REST가 아니라 socket.io 게이트웨이(`chat.gateway.ts`)로 처리한다. 설치 필요: `@nestjs/websockets`, `@nestjs/platform-socket.io`, `socket.io`. (기존 `ws` 의존성은 Supabase realtime용이라 무관.)
+
+- **CORS**: `main.ts`의 `enableCors`는 HTTP 전용이라 소켓엔 안 걸린다. `@WebSocketGateway({ cors: { origin: WEB_ORIGIN, credentials: true } })`로 게이트웨이에서 직접 지정한다.
+- **인증(핸드셰이크 1회)**: 기존 HTTP `SupabaseAuthGuard`는 `context.switchToHttp()`에 묶여 소켓에서 못 쓴다. 대신 `ChatModule`이 `imports:[AuthModule]`(AuthModule이 `SupabaseService`를 exports함)로 `SupabaseService`를 주입받아, `handleConnection`에서 `socket.handshake.auth.token`을 꺼내 `SupabaseService.getUser(token)`로 검증 → 성공 시 `socket.data.user`에 담고, 실패 시 `socket.disconnect()`. 핸드셰이크 때 한 번만 인증하고 이후 이벤트는 신뢰한다.
+
+| 이벤트(방향) | 이름 | 페이로드 | 동작 |
+|:---|:---|:---|:---|
+| C→S | `chat:join` | `{ roomId }` | 참여자 대조 후 방 입장 |
+| C→S | `chat:send` | `{ roomId, content, clientMsgId }` | **DB 저장 먼저 → 방에 브로드캐스트** (순서 고정: 저장돼야 재배포 유실 방지). `clientMsgId`는 미전송 큐 dedup·ack 매칭용 |
+| S→C | `chat:message` | `{ id, roomId, senderId, content, createdAt, clientMsgId }` | 방 전원에게 새 메시지 |
+| S→C(발신자) | `chat:ack` | `{ clientMsgId, id }` | 미전송 큐에서 확정 제거용 |
+| C→S / S→C | `chat:read` | `{ roomId, lastReadMessageId }` | 뷰어의 `*LastReadMessageId` 갱신 → 상대에게 읽음 위치 브로드캐스트 |
+
 ---
 
 ## 5. 프론트 페이지 URL
@@ -219,6 +267,8 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 | `/student/lesson-request` | 학생 | `(student)` | 내 레슨 신청 현황 + 받은 제안 |
 | `/student/lesson-request/new` | 학생 | `(student)` | 레슨 신청 작성 |
 | `/coach/lesson-requests` | 코치 | `(coach)` | 모집중 레슨 신청 목록 (제안 보내기/취소 포함) |
+| `/chat` | 공용(로그인) | `(chat)` | 채팅방 목록 |
+| `/chat/:roomId` | 당사자 2명 | `(chat)` | 채팅방 |
 
 ### 규칙
 
@@ -227,6 +277,17 @@ pnpm --filter=@mulink/api exec prisma db push                       # 프로토�
 - 단수/복수로 "내 하나" vs "여러 목록"을 구분: `/student/lesson-request`(1인 1신청, 단수) vs `/coach/lesson-requests`(목록, 복수).
 - 페이지 URL ≠ API URL (기준이 다름: 페이지는 사용자 여정, API는 데이터 자원).
 - 확장 시 기존 URL을 갈아엎지 않고 해당 역할 그룹에 새 페이지를 추가한다.
+- **`(chat)` 그룹은 역할이 아니라 "로그인"만 가른다.** `(student)`/`(coach)` layout이 role까지 가드하는 것과 달리, `(chat)/layout.tsx`는 `getCurrentUser()` → `if(!user) redirect('/')`만 한다(채팅은 학생·코치 공용). 방 당사자 검증은 서버(REST·소켓 참여자 대조)가 하므로 FE는 방 진입 자체를 막지 않아도 된다.
+
+### 채팅 프론트 배치 (FSD) — 신규 작업 시 참고
+
+- 라우트: `app/(chat)/layout.tsx`(로그인 가드), `app/(chat)/chat/page.tsx`(목록), `app/(chat)/chat/[roomId]/page.tsx`(채팅방).
+- `entities/chat/` — `chat.type.ts`(방·메시지·목록 타입, Prisma와 수동 동기화), `chat.api.ts`(`server-only`, SSR 초기 조회 — 기존 `lesson-request.api.ts`의 인라인 fetch + `Bearer session.access_token` 패턴 복제).
+- `features/chat/` — `chat.action.ts`(`'use server'`, 방 생성/취득), `ui/*.tsx`(`'use client'` 채팅방·목록·입력창), 소켓 연결 훅·미전송 큐·재동기화 훅.
+- **함정(꼭 지킬 것)**: App Router는 클라이언트 네비게이션이라 소켓을 페이지 컴포넌트에 두면 라우트 이동(목록↔방) 시 연결이 끊긴다. **소켓 인스턴스는 라우트 전환에도 언마운트되지 않는 상위 전역 스코프(`(chat)/layout.tsx` 또는 전역 상태관리)에 1개 올려** 연결이 유지되게 한다. 연결 생성은 `useEffect` 안에서만, cleanup에서 정리.
+- **클라이언트 세션**: `shared/lib/supabase/client.ts`의 `createClient()`(browser)로 `session.access_token`을 소켓 핸드셰이크에 넘긴다(첫 클라이언트측 supabase 사용처). `onAuthStateChange`로 토큰 갱신 시 재연결.
+- **헤더**(`widgets/Header.tsx`): 드롭다운에 채팅 진입(`DropdownMenuItem asChild + <Link href="/chat">`) 추가. Header는 서버 컴포넌트라 실시간 안읽음 뱃지를 직접 못 붙이므로, **안읽음 뱃지는 소켓을 구독하는 별도 `'use client'` 위젯**으로 만들어 Header에 삽입한다(뱃지는 `shared/ui/badge`).
+- **카톡 버튼 교체**: `features/lesson-request/ui/my-request/CoachProfileDrawer.tsx`의 "카톡 1:1 상담" 버튼(현재 `onClick`이 빈 함수)을 "채팅하기/채팅 계속하기"로. 각 제안의 `roomId`(위 4장 `GET /lesson-requests/me` 응답에 추가됨)가 `null`이면 방 생성 액션 후 `/chat/:roomId`로, 있으면 바로 그 방으로 이동한다.
 
 ---
 
@@ -252,6 +313,8 @@ S3_BUCKET                      # 프로필 이미지 버킷명 (퍼블릭 읽기
 # 기타
 WEB_ORIGIN                     # 로그인 후 web 리다이렉트 주소
 ```
+
+> **채팅(WebSocket)용 신규 환경변수는 없다.** socket.io는 기존 NestJS 서버와 같은 호스트·포트(`PORT`, 기본 4000)에 얹히므로, 프론트 소켓 연결 주소는 기존 `NEXT_PUBLIC_API_URL`을 재사용한다. 게이트웨이 CORS 오리진도 기존 `WEB_ORIGIN`을 쓴다. (소켓 서버를 물리적으로 분리하게 되면 그때 별도 `NEXT_PUBLIC_SOCKET_URL`을 추가한다.)
 
 ---
 
@@ -284,3 +347,37 @@ WEB_ORIGIN                     # 로그인 후 web 리다이렉트 주소
 - 표시는 목록 아바타에서 `next/image`로 렌더한다(`next.config.ts`의 `images.remotePatterns`에 S3 도메인 등록 필요).
 
 > 축소를 서버(sharp)가 아니라 클라이언트에서 하는 이유: 서버 변환은 원본이 이미 업로드된 뒤라 업로드 대역폭·서버 수신 부하·원본 스토리지를 줄이지 못한다. 브라우저에서 미리 줄이면 축소본만 네트워크를 타므로 이 비용들이 함께 줄어든다.
+
+---
+
+## 8. 채팅 실시간 통신
+
+1:1 실시간 채팅은 socket.io로 구현하며, **서버 재배포(재시작) 시 발생하는 세 가지 문제**를 각각의 메커니즘으로 해결하는 것이 이 장의 핵심이다. 메시지는 항상 DB(ChatMessage)에 영속되고, 소켓은 실시간 전달 통로다. 게이트웨이 이벤트·인증은 4장 참고.
+
+### 8.1 연결·인증
+
+- 프론트는 `shared/lib/supabase/client.ts`의 `createClient()`(browser)로 얻은 `session.access_token`을 소켓 핸드셰이크 `auth: { token }`으로 넘긴다. 서버는 핸드셰이크에서 이 토큰을 `SupabaseService.getUser()`로 1회 검증한다(4장).
+- 소켓은 라우트 전환에도 유지되도록 상위 전역 스코프(`(chat)/layout.tsx` 또는 전역 상태관리)에 1개만 생성한다. 토큰 갱신(`onAuthStateChange`) 시 새 토큰으로 재연결한다.
+
+### 8.2 문제① 재연결 폭풍 — 백오프 + 지터
+
+재배포로 서버가 내려가면 다수 클라이언트가 동시에 재연결을 시도해 막 살아난 서버를 재타격한다. socket.io-client 내장 옵션으로 완화한다: `reconnectionDelay`(초기 지연)·`reconnectionDelayMax`(상한)로 재시도 간격을 지수 증가시키고, `randomizationFactor`(지터)로 무작위 분산해 동시 재접속을 흩는다. (커스텀 로직 불필요 — 라이브러리 내장.)
+
+### 8.3 문제② 메시지 유실 — DB 영속 + 마지막 수신 ID 재동기화 (핵심)
+
+끊긴 사이 상대가 보낸 메시지는 재연결돼도 소켓이 다시 밀어주지 않는다(소켓은 "지금부터 오는 것"만 전달, DB를 스스로 뒤지지 않음). 두 축으로 해결한다.
+
+- **영속**: `chat:send`는 **DB 저장을 먼저, 브로드캐스트를 나중에** 한다(4장). 서버가 죽어도 저장된 메시지는 남는다.
+- **재동기화**: 프론트는 방에서 받은 **마지막 메시지의 `id`(autoincrement Int)를 보관**하고, 재연결 직후 `GET /chat-rooms/:id/messages?after=<마지막 id>`로 끊긴 동안 쌓인 메시지만 조회해 이어붙인다. `id`가 단조증가 정수라 "이 ID 이후"가 단순 `WHERE id > ?`가 된다 — 이것이 ChatMessage의 int PK 채택 이유다.
+
+### 8.4 문제③ 미전송 — 프론트 재전송 큐
+
+- `chat:send` 시 `clientMsgId`(프론트 생성)를 붙이고 메시지를 로컬 미확정 큐에 넣어 낙관적으로 렌더(pending)한다.
+- 서버 `chat:ack{clientMsgId, id}`를 받으면 큐에서 제거하고 실제 `id`로 확정한다.
+- 연결이 끊긴 채 보낸(미ack) 큐 항목은 재연결 시 자동 재전송한다. 서버는 `chat:message`에 `clientMsgId`를 되실어 보내 낙관적 렌더분과 중복을 제거한다.
+- 큐는 인메모리로 둔다(새로고침 시 소실). 새로고침은 초기 내역을 DB에서 다시 불러오므로 유실 복구엔 문제없다. (sessionStorage 영속은 필요해지면 추가.)
+
+### 8.5 읽음 흐름
+
+- 방 진입 및 새 메시지 수신 시 `chat:read{ roomId, lastReadMessageId=방의 마지막 메시지 id }`를 보낸다 → 서버가 뷰어 역할에 맞는 `*LastReadMessageId`를 갱신하고 상대에게 브로드캐스트한다.
+- 채팅 목록의 `unreadCount`와 헤더 안읽음 뱃지는 `id > 내 lastReadMessageId AND senderId != 나`로 집계한다.
